@@ -165,24 +165,35 @@ ios/
 `Content-Range`), `HEAD`, and mime by extension. AVPlayer needs ranges to seek.
 Read-only, validated against the library, never an arbitrary path.
 
-**LAN binding with a route allowlist** — the bridge now listens on `0.0.0.0:3690`
+**LAN binding with a loopback-only list** — the bridge listens on `0.0.0.0:3690`
 by default (`AETHER_LAN=0` restores loopback-only) and prints
-`[http] phone: http://<LAN-IP>:3690` at boot. Requests from a non-loopback peer
-are limited to the routes a phone needs:
+`[http] phone: http://<LAN-IP>:3690` at boot.
+
+This started as an allow-list of routes a phone *could* reach, and that list
+kept falling behind: the home-screen icon, the web-app manifest and the
+room-add routes were written after it and answered
+`{"ok":false,"error":"that route is local only"}` to the phone. **The icon was
+the visible bug** - iOS falls back to drawing the page's first letter when it
+cannot fetch `apple-touch-icon.png`, which is why the home-screen tile stayed an
+"A". The gate is now inverted: every route is reachable, and `LOCAL_ONLY` in
+`src/server.rs` names the ones that are not.
 
 ```
-/state /library /playlists /lyrics /lyricoffset /themes /theme /theme/current
-/audio /art /cover /play /pause /resume /toggle /next /prev /seek /volume /stop
-/playlist/switch /playlist/append /playlist/remove /playlist/new /track/save
+/phone /frame /page /shell/*                        (gateway, diag, window control)
+/oauth/* /accounts* /spotify/* /extensions /engine  (credentials)
+/appearance* /lyricstyle* /eq* /theme/save|delete   (the desktop's own look)
+/config /rescan /catalog/sync /backdrop/* /sleep
+/playlist/add_local|add_spotify|import*|export
+/track/info /track/reveal /thumb /live /youtube/* /sources/search /web/resolve
+/queue* /mode /shuffle /repeat /playlist/set /stats /favorite /favorites
+/convert/covers /convert/one
 ```
 
-Everything that can spawn an extractor, import an arbitrary file, swap an
-account or shut the app down answers
-`{"ok":false,"error":"that route is local only"}` to the LAN. Playlist edits and
-`/track/save` *are* allowed, because that is how the phone builds rooms and saves
-a song for offline play. The desktop's own QML keeps using `127.0.0.1` and is
-unaffected. This is deliberately not token-authenticated: a home LAN can change
-the song and the rooms, but cannot write outside the library or run extractors.
+Everything else - reading, streaming, room edits, room covers, adding a song to
+a room as a stream or a download, the icon and the manifest - answers the LAN.
+A shared Wi-Fi can change the music and the rooms, but cannot swap an account,
+run an extractor, take a path from the caller or shut the app down.
+
 
 ---
 
