@@ -1,0 +1,58 @@
+{
+  "name": "Frutiger",
+  "bg": "#010814",
+  "panel": "#06203f",
+  "panel_alpha": 0.52,
+  "text": "#eaffff",
+  "dim": "#8fc7e8",
+  "accent": "#00ff7f",
+  "bar": "#00ffff",
+  "light": false,
+  "anim": "aurora",
+  "transition": {
+    "type": "dolly",
+    "dur": 420
+  },
+  "bg3d": {
+    "archetype": "bubbles",
+    "speed": 1.0,
+    "dir": 1,
+    "intensity": 1.0,
+    "count": 26,
+    "size": 0.2,
+    "sizeVar": 0.34,
+    "spread": 330,
+    "depth": 300,
+    "glow": 0.8,
+    "bloom": 0.42,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/frutiger_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.45,
+    "bdGlow": 0.38,
+    "bdSway": 1.6
+  },
+  "tag": "FRUTIGER AERO",
+  "scene": "glossy optimism",
+  "line": "water, sky and optimistic plastic",
+  "accent2": "#7aa8ff",
+  "glow": "#baffdf",
+  "mood": "The world as a glossy, welcoming object.",
+  "signature": "bubbles",
+  "depth": {
+    "shadow": 0.55,
+    "rim": 0.4,
+    "grain": 0.08,
+    "vignette": 0.24,
+    "glass": 0.08,
+    "blur": 0.82
+  },
+  "palette": [
+    "#010814",
+    "#06203f",
+    "#00ff7f",
+    "#7aa8ff",
+    "#00ffff"
+  ]
+}

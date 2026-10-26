@@ -1,0 +1,63 @@
+{
+  "name": "Vapor",
+  "bg": "#2b1055",
+  "panel": "#1a0a3a",
+  "panel_alpha": 0.52,
+  "text": "#ffe6f7",
+  "dim": "#b48ad9",
+  "accent": "#ff6ec7",
+  "bar": "#00f0ff",
+  "light": false,
+  "anim": "grid",
+  "transition": {
+    "type": "tilt",
+    "dur": 460
+  },
+  "bg3d": {
+    "archetype": "vapor",
+    "speed": 0.85,
+    "dir": 1,
+    "intensity": 1.0,
+    "rings": 3,
+    "r0": 170,
+    "rGap": 90,
+    "nodes": 28,
+    "nGlow": 0.9,
+    "nSize": 0.1,
+    "coreR": 1.5,
+    "coreGlass": 0.0,
+    "coreGlow": 0.85,
+    "rTilt": 18,
+    "glow": 1.3,
+    "bloom": 0.7,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/vapor_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.6,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "VAPORWAVE",
+  "scene": "sunset mall",
+  "line": "sunset mall, chrome palms",
+  "accent2": "#ffc96b",
+  "glow": "#ffb3e3",
+  "mood": "A sunset that never has to end.",
+  "signature": "vapor",
+  "depth": {
+    "shadow": 0.6,
+    "rim": 0.4,
+    "grain": 0.1,
+    "vignette": 0.3,
+    "glass": 0.1,
+    "blur": 0.9
+  },
+  "palette": [
+    "#2b1055",
+    "#1a0a3a",
+    "#ff6ec7",
+    "#ffc96b",
+    "#00f0ff"
+  ]
+}

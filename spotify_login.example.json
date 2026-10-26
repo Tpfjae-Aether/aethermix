@@ -1,0 +1,5 @@
+{
+  "username": "your_spotify_email_or_username",
+  "password": "your_spotify_password",
+  "_note": "Premium account required for librespot streaming. This file stays local. After the first successful login the credentials are cached in cache/credentials.json and this file can be deleted. Rename to spotify_login.json to enable."
+}

@@ -1,0 +1,62 @@
+{
+  "name": "Ink",
+  "bg": "#050508",
+  "panel": "#0a0a0c",
+  "panel_alpha": 0.52,
+  "text": "#e8e2d8",
+  "dim": "#8a8578",
+  "accent": "#d7d7d2",
+  "bar": "#d4a017",
+  "light": false,
+  "anim": "plume",
+  "transition": {
+    "type": "veil",
+    "dur": 520
+  },
+  "bg3d": {
+    "archetype": "veil",
+    "speed": 0.55,
+    "dir": 1,
+    "intensity": 0.95,
+    "planes": 4,
+    "tall": 0,
+    "w": 8,
+    "h": 5,
+    "op": 0.4,
+    "sway": 7,
+    "yaw": 18,
+    "zGap": -130,
+    "glow": 0.6,
+    "bloom": 0.45,
+    "panelTex": "C:/Aether/custom_spotify/assets/themes/ink_brush.png",
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/ink_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.65,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "SUMI INK",
+  "scene": "a single stroke",
+  "line": "one brushstroke, bleeding black",
+  "accent2": "#ff5a4d",
+  "glow": "#f4f1e8",
+  "mood": "One breath, one line, no corrections.",
+  "signature": "ink",
+  "depth": {
+    "shadow": 0.45,
+    "rim": 0.2,
+    "grain": 0.36,
+    "vignette": 0.5,
+    "glass": 0.1,
+    "blur": 1.0
+  },
+  "palette": [
+    "#050508",
+    "#0a0a0c",
+    "#d7d7d2",
+    "#ff5a4d",
+    "#d4a017"
+  ]
+}

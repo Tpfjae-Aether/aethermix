@@ -1,0 +1,62 @@
+{
+  "name": "Meteor",
+  "bg": "#07030d",
+  "panel": "#100a1c",
+  "panel_alpha": 0.52,
+  "text": "#e8e4f5",
+  "dim": "#9d8fb8",
+  "accent": "#ffb15c",
+  "bar": "#9d5cff",
+  "light": false,
+  "anim": "meteors",
+  "transition": {
+    "type": "parallax",
+    "dur": 420
+  },
+  "bg3d": {
+    "archetype": "streaks",
+    "speed": 1.6,
+    "dir": -1,
+    "intensity": 1.0,
+    "rate": 260,
+    "max": 900,
+    "vy": 70,
+    "vx": 40,
+    "sy": 16,
+    "sx": 60,
+    "psize": 0.18,
+    "pend": 0.24,
+    "life": 4200,
+    "glow": 1.2,
+    "bloom": 0.6,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/meteor_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.62,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "BURNING SKY",
+  "scene": "stones across the void",
+  "line": "stones burning across the void",
+  "accent2": "#82c8ff",
+  "glow": "#ffd2a1",
+  "mood": "A brief bright argument with gravity.",
+  "signature": "rain",
+  "depth": {
+    "shadow": 0.65,
+    "rim": 0.3,
+    "grain": 0.16,
+    "vignette": 0.45,
+    "glass": 0.1,
+    "blur": 0.9
+  },
+  "palette": [
+    "#07030d",
+    "#100a1c",
+    "#ffb15c",
+    "#82c8ff",
+    "#9d5cff"
+  ]
+}

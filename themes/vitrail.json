@@ -1,0 +1,62 @@
+{
+  "name": "Vitrail",
+  "bg": "#3a3632",
+  "panel": "#2c2926",
+  "panel_alpha": 0.52,
+  "text": "#f5eede",
+  "dim": "#b0a493",
+  "accent": "#7a5cff",
+  "bar": "#1b3a9b",
+  "light": false,
+  "anim": "glass",
+  "transition": {
+    "type": "ripple",
+    "dur": 520
+  },
+  "bg3d": {
+    "archetype": "veil",
+    "speed": 0.65,
+    "dir": 1,
+    "intensity": 1.0,
+    "planes": 5,
+    "tall": 1,
+    "w": 2.4,
+    "h": 6.8,
+    "op": 0.55,
+    "sway": 5,
+    "yaw": 44,
+    "zGap": -110,
+    "glow": 0.8,
+    "bloom": 0.5,
+    "panelTex": "C:/Aether/custom_spotify/assets/themes/vitrail_glass.png",
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/vitrail_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.58,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "STAINED LIGHT",
+  "scene": "cathedral colour",
+  "line": "cathedral light through colour",
+  "accent2": "#2fd4a7",
+  "glow": "#b9aaff",
+  "mood": "Daylight broken into something holy.",
+  "signature": "glass",
+  "depth": {
+    "shadow": 0.6,
+    "rim": 0.45,
+    "grain": 0.18,
+    "vignette": 0.4,
+    "glass": 0.09,
+    "blur": 0.95
+  },
+  "palette": [
+    "#3a3632",
+    "#2c2926",
+    "#7a5cff",
+    "#2fd4a7",
+    "#1b3a9b"
+  ]
+}

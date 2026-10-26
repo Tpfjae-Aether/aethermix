@@ -1,0 +1,62 @@
+{
+  "name": "Circuit",
+  "bg": "#06140c",
+  "panel": "#0a1f13",
+  "panel_alpha": 0.52,
+  "text": "#d8ffe8",
+  "dim": "#7fa88c",
+  "accent": "#00ff9d",
+  "bar": "#00ccff",
+  "light": false,
+  "anim": "circuit",
+  "transition": {
+    "type": "slide",
+    "dur": 300
+  },
+  "bg3d": {
+    "archetype": "grid",
+    "speed": 0.75,
+    "dir": 1,
+    "intensity": 0.95,
+    "gx": 7,
+    "gy": 5,
+    "gGap": 95,
+    "gNode": 0.07,
+    "gPulse": 0.17,
+    "gTilt": 22,
+    "glow": 1.0,
+    "bloom": 0.5,
+    "floorTex": 1,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/circuit_pcb.png",
+    "bdTilt": 0,
+    "bdY": -130,
+    "bdW": 13,
+    "bdH": 9,
+    "bdZ": -60,
+    "bdGlow": 0.35,
+    "bdOp": 0.45,
+    "bdSway": 0
+  },
+  "tag": "CIRCUITRY",
+  "scene": "copper veins",
+  "line": "current walking copper veins",
+  "accent2": "#b6ff3b",
+  "glow": "#7dffc4",
+  "mood": "The current is thinking out loud.",
+  "signature": "grid",
+  "depth": {
+    "shadow": 0.5,
+    "rim": 0.32,
+    "grain": 0.14,
+    "vignette": 0.3,
+    "glass": 0.08,
+    "blur": 0.8
+  },
+  "palette": [
+    "#06140c",
+    "#0a1f13",
+    "#00ff9d",
+    "#b6ff3b",
+    "#00ccff"
+  ]
+}

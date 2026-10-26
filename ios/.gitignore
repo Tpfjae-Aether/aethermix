@@ -1,0 +1,7 @@
+build/
+dist/
+AetherMix.xcodeproj/
+DerivedData/
+.DS_Store
+*.xcuserstate
+xcuserdata/

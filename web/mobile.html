@@ -1,0 +1,2191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AetherMix">
+<meta name="theme-color" content="#07060f">
+<!-- The icon is the app's own, served by the bridge. Without this iOS puts the
+     page's first letter on the home screen instead. -->
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="application-name" content="AetherMix">
+<title>AetherMix</title>
+<style>
+/* ---------------------------------------------------------------------------
+   The phone is a second window onto the same library, served by the desktop's
+   own bridge. Nothing here reaches the internet: every request is same-origin,
+   and the audio is either a file ranged off the PC's disk or a page the PC
+   resolves and relays. Two harnesses, one inventory.
+   ------------------------------------------------------------------------ */
+:root{
+  --accent:#a08cff;
+  --accent2:#5ee7ff;
+  --ink:#f5f3ff;
+  --dim:#a9a4c7;
+  --line:rgba(255,255,255,.085);
+  --glass:rgba(255,255,255,.055);
+  --glass-hi:rgba(255,255,255,.105);
+  --panel:#0a0a12;
+  --bg:#07060f;
+  --pad:18px;
+  --dock:74px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  overflow:hidden;overscroll-behavior:none;
+  transition:background .6s ease;
+}
+button{font-family:inherit;border:0;background:none;color:inherit;padding:0}
+
+/* the room itself ------------------------------------------------------- */
+#atmo{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.9}
+#bg1,#bg2{position:fixed;inset:-12%;background-size:cover;background-position:center;
+  z-index:0;pointer-events:none}
+#bg1{filter:blur(50px) saturate(1.3);opacity:.5;transform:scale(1.14);
+  transition:background-image .7s ease,opacity .8s ease}
+#bg2{filter:blur(84px) saturate(1.45);opacity:.34;transform:scale(1.2);
+  transition:background-image .9s ease,opacity .8s ease}
+#scrim{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(255,255,255,.07), transparent 60%),
+    linear-gradient(180deg, rgba(7,6,15,.30) 0%, rgba(7,6,15,.66) 46%, var(--bg) 100%)}
+
+/* shell ----------------------------------------------------------------- */
+.app{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 8px) 0 0}
+
+.top{display:flex;align-items:center;gap:10px;padding:4px var(--pad) 10px;flex:none}
+.mark{font-size:11px;letter-spacing:.34em;font-weight:750;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.net{font-size:8.5px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;
+  margin-left:auto;transition:color .4s ease}
+.dot{width:6px;height:6px;border-radius:50%;background:#3ad6a0;flex:none;
+  box-shadow:0 0 10px #3ad6a0;transition:background .4s ease,box-shadow .4s ease}
+.dot.off{background:#ff6b6b;box-shadow:0 0 10px #ff6b6b}
+.tbtn{border:1px solid var(--line);background:var(--glass);color:var(--dim);
+  font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+  padding:6px 10px;border-radius:999px;transition:background .25s ease,color .25s ease}
+.tbtn:active{background:var(--glass-hi)}
+
+.panes{position:relative;flex:1;min-height:0}
+.pane{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 var(--pad) calc(var(--dock) + 84px);
+  scrollbar-width:none;filter:blur(5px);
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 14px,#000 calc(100% - 40px),transparent 100%);
+  mask-image:linear-gradient(180deg,transparent 0,#000 14px,#000 calc(100% - 40px),transparent 100%);
+  opacity:0;transform:translateY(12px) scale(.988);pointer-events:none;
+  transition:opacity .36s cubic-bezier(.22,.7,.2,1),transform .36s cubic-bezier(.22,.7,.2,1),
+             filter .36s cubic-bezier(.22,.7,.2,1)}
+.pane::-webkit-scrollbar{display:none}
+.pane.on{opacity:1;transform:none;filter:none;pointer-events:auto}
+
+/* ---------------------------------------------------------------- now pane */
+.now{display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:2px}
+.sleeve-wrap{position:relative;width:min(76vw,340px);aspect-ratio:1}
+.sleeve-wrap .halo{position:absolute;inset:-14%;border-radius:50%;z-index:0;
+  background:radial-gradient(circle at 50% 55%, rgba(160,140,255,.55), transparent 68%);
+  filter:blur(34px);opacity:.55;transition:background 1s ease,opacity .8s ease}
+.sleeve{position:relative;z-index:1;width:100%;height:100%;border-radius:28px;
+  background:linear-gradient(150deg,rgba(255,255,255,.16),rgba(255,255,255,.04));
+  background-size:cover;background-position:center;
+  box-shadow:0 30px 70px -22px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,255,255,.10);
+  overflow:hidden;transition:transform .5s cubic-bezier(.22,.7,.2,1),box-shadow .5s ease}
+.sleeve::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(200deg,rgba(255,255,255,.20),transparent 44%)}
+.sleeve.idle{display:grid;place-items:center;font-size:9.5px;letter-spacing:.22em;
+  color:var(--dim);text-transform:uppercase}
+.sleeve:active{transform:scale(.985)}
+.nowmeta{text-align:center;max-width:100%;padding:0 6px}
+.nowtitle{font-size:23px;font-weight:700;letter-spacing:-.03em;line-height:1.18;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nowartist{font-size:12.5px;color:var(--dim);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:8px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--accent2);
+  border:1px solid color-mix(in srgb,var(--accent2) 30%,transparent);
+  background:color-mix(in srgb,var(--accent2) 10%,transparent);
+  padding:3px 9px;border-radius:999px}
+
+/* visualiser ------------------------------------------------------------- */
+.vizbox{width:100%;position:relative}
+.viz{width:100%;height:88px;display:block;border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  transition:height .4s cubic-bezier(.22,.7,.2,1)}
+.vmodes{position:absolute;right:6px;top:-26px;display:flex;gap:6px}
+.vmode{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+  padding:4px 8px;border-radius:999px;transition:color .2s ease,background .2s ease}
+.vmode.on{color:var(--ink);background:var(--glass-hi)}
+
+/* timeline --------------------------------------------------------------- */
+.timeline{width:100%}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;
+  background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2)) no-repeat,
+             rgba(255,255,255,.13);
+  background-size:var(--fill,0%) 100%,100% 100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;
+  border-radius:50%;background:#fff;margin-top:-4.5px;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent),0 2px 8px rgba(0,0,0,.5)}
+input[type=range].thin{height:20px}
+input[type=range].thin::-webkit-slider-thumb{width:11px;height:11px;margin-top:-3.5px}
+.times{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);
+  font-variant-numeric:tabular-nums;letter-spacing:.04em;margin-top:-3px}
+
+/* transport -------------------------------------------------------------- */
+.transport{display:flex;align-items:center;justify-content:center;gap:22px;
+  padding:2px 0 0}
+.tb{padding:9px;display:grid;place-items:center;color:var(--ink);opacity:.9;
+  transition:transform .18s ease,opacity .18s ease,color .2s ease}
+.tb:active{transform:scale(.9)}
+.tb.on{color:var(--accent2);opacity:1}
+.tb.on svg{filter:drop-shadow(0 0 9px color-mix(in srgb,var(--accent2) 60%,transparent))}
+.tb svg{display:block}
+.play{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--accent),var(--accent2));color:#0a0714;
+  box-shadow:0 16px 36px -12px color-mix(in srgb,var(--accent) 72%,transparent);
+  transition:transform .18s cubic-bezier(.22,.7,.2,1),box-shadow .3s ease}
+.play:active{transform:scale(.94)}
+.play.playing{animation:breathe 4.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{box-shadow:0 16px 36px -12px color-mix(in srgb,var(--accent) 66%,transparent)}
+                   50%{box-shadow:0 18px 46px -10px color-mix(in srgb,var(--accent2) 70%,transparent)}}
+
+.chiprow{display:flex;gap:8px;width:100%;padding:2px 2px 0;flex-wrap:wrap;justify-content:center}
+.chip{border:1px solid var(--line);background:var(--glass);color:var(--dim);
+  font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+  padding:7px 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;
+  transition:background .22s ease,color .22s ease,border-color .22s ease}
+.chip:active{background:var(--glass-hi);color:var(--ink)}
+.chip.hot{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.vol{display:flex;align-items:center;gap:10px;width:100%;padding:0 4px}
+.vol svg{flex:none;opacity:.55}
+
+/* ------------------------------------------------------------------- lists */
+.group{margin-bottom:22px}
+.glabel{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);
+  padding:2px 2px 9px;display:flex;align-items:center;gap:10px}
+.glabel .count{color:var(--dim);opacity:.7;letter-spacing:.1em}
+.row{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:16px;
+  transition:background .22s ease,transform .22s ease}
+.row:active{background:var(--glass-hi)}
+.row.on{background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.thumb{width:48px;height:48px;flex:none;border-radius:12px;
+  background:rgba(255,255,255,.06) center/cover no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.rtext{min-width:0;flex:1}
+.rtitle{font-size:13.5px;font-weight:560;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsub{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;margin-top:2px}
+.rdur{font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
+.badge{font-size:7.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent2);
+  border:1px solid color-mix(in srgb,var(--accent2) 28%,transparent);
+  border-radius:999px;padding:2px 6px;flex:none}
+.eq{display:flex;align-items:flex-end;gap:2px;height:14px;width:16px;flex:none}
+.eq i{flex:1;background:var(--accent2);border-radius:1px;height:20%;
+  animation:eqb 1.05s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.18s}
+.eq i:nth-child(3){animation-delay:.36s}
+@keyframes eqb{0%,100%{height:22%}50%{height:100%}}
+.empty{color:var(--dim);font-size:12px;padding:26px 6px;text-align:center;line-height:1.65}
+
+/* room cards -------------------------------------------------------------- */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{position:relative;border-radius:20px;padding:0;overflow:hidden;
+  background:var(--glass);aspect-ratio:1/.96;text-align:left;
+  box-shadow:inset 0 0 0 1px var(--line);
+  transition:transform .28s cubic-bezier(.22,.7,.2,1),box-shadow .3s ease}
+.card:active{transform:scale(.97)}
+.card .art{position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:.92;transition:opacity .4s ease,transform .6s ease}
+.card .fade{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(6,5,12,.05) 0%,rgba(6,5,12,.42) 52%,rgba(6,5,12,.88) 100%)}
+.card .ctext{position:absolute;left:12px;right:12px;bottom:11px}
+.card .cname{font-size:13px;font-weight:640;letter-spacing:-.01em;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical}
+.card .csub{font-size:9.5px;color:var(--dim);margin-top:3px;letter-spacing:.05em}
+.card.new{display:grid;place-items:center;background:none;
+  border:1px dashed var(--line)}
+.card.new .plus{font-size:26px;color:var(--dim);line-height:1}
+.card.new .lbl{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+  margin-top:6px}
+
+/* search ------------------------------------------------------------------ */
+.searchrow{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.searchrow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--glass);
+  color:var(--ink);font-size:15px;padding:11px 14px;border-radius:15px;outline:none;
+  transition:border-color .25s ease,background .25s ease}
+.searchrow input:focus{border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  background:var(--glass-hi)}
+.searchrow input::placeholder{color:var(--dim);opacity:.75}
+.filterrow{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;
+  scrollbar-width:none}
+.filterrow::-webkit-scrollbar{display:none}
+.fchip{border:1px solid var(--line);background:var(--glass);color:var(--dim);
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:650;
+  padding:7px 11px;border-radius:999px;white-space:nowrap;
+  transition:color .22s ease,background .22s ease,border-color .22s ease}
+.fchip.on{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 50%,transparent);
+  background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.acts{display:flex;gap:6px;flex:none}
+.act{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  background:var(--glass);box-shadow:inset 0 0 0 1px var(--line);color:var(--dim);
+  transition:background .2s ease,color .2s ease,transform .18s ease}
+.act:active{transform:scale(.9);background:var(--glass-hi);color:var(--ink)}
+
+/* ------------------------------------------------------------------- dock */
+.dock{position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:6;
+  display:flex;gap:4px;padding:7px;border-radius:26px;
+  background:rgba(16,13,26,.55);border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);
+  box-shadow:0 22px 50px -18px rgba(0,0,0,.85)}
+.dock .ditem{position:relative;width:52px;display:flex;flex-direction:column;
+  align-items:center;gap:3px;padding:7px 0 6px;border-radius:19px;color:var(--dim);
+  transition:color .28s ease,background .28s ease}
+.dock .ditem.on{color:var(--ink);background:var(--glass-hi)}
+.dock .ditem span{font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.dock .ditem svg{opacity:.92}
+.dock .ind{position:absolute;bottom:3px;width:14px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  opacity:0;transform:scaleX(.4);transition:opacity .3s ease,transform .3s ease}
+.dock .ditem.on .ind{opacity:1;transform:scaleX(1)}
+
+/* mini now bar, on the panes that are not "now" --------------------------- */
+.mini{position:fixed;left:var(--pad);right:var(--pad);
+  bottom:calc(env(safe-area-inset-bottom) + var(--dock) + 18px);z-index:5;
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:18px;
+  background:rgba(20,16,32,.6);border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+  opacity:0;transform:translateY(12px) scale(.98);pointer-events:none;
+  transition:opacity .3s ease,transform .3s cubic-bezier(.22,.7,.2,1)}
+.mini.show{opacity:1;transform:none;pointer-events:auto}
+.mini .thumb{width:38px;height:38px;border-radius:10px}
+.mini .rtitle{font-size:12px}
+.mini .rsub{font-size:10px}
+
+/* sheets ------------------------------------------------------------------ */
+.sheet{position:fixed;inset:0;z-index:20;display:none}
+.sheet.open{display:block}
+.sheet .backdrop{position:absolute;inset:0;background:rgba(4,3,10,.55);
+  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  opacity:0;transition:opacity .3s ease}
+.sheet.open .backdrop{opacity:1}
+.sheet .panel{position:absolute;left:0;right:0;bottom:0;max-height:78vh;
+  display:flex;flex-direction:column;
+  background:color-mix(in srgb,var(--panel) 88%,transparent);
+  border-top-left-radius:26px;border-top-right-radius:26px;
+  box-shadow:0 -24px 60px rgba(0,0,0,.6);border-top:1px solid var(--line);
+  -webkit-backdrop-filter:blur(30px) saturate(1.3);backdrop-filter:blur(30px) saturate(1.3);
+  padding:14px 16px calc(env(safe-area-inset-bottom) + 16px);
+  transform:translateY(24px);opacity:0;
+  transition:transform .36s cubic-bezier(.22,.7,.2,1),opacity .28s ease}
+.sheet.open .panel{transform:none;opacity:1}
+.sheet .grab{width:38px;height:4px;border-radius:2px;background:var(--glass-hi);margin:0 auto 12px}
+.go{width:100%;height:46px;border:0;border-radius:15px;margin-top:8px;
+  background:linear-gradient(135deg,var(--accent),#6ee7ff);color:#080512;
+  font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  font-family:inherit;transition:transform .18s ease,opacity .18s ease}
+.go:active{transform:scale(.985)}
+.go[disabled]{opacity:.55}
+.sheet h3{margin:0 0 3px;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--dim)}
+.sheet .hint{font-size:10.5px;color:var(--dim);margin:0 0 12px;line-height:1.55}
+
+/* lyrics ------------------------------------------------------------------ */
+.lyrbox{overflow:hidden;flex:1;min-height:0;position:relative;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 16%,#000 84%,transparent);
+  mask-image:linear-gradient(180deg,transparent,#000 16%,#000 84%,transparent)}
+.lyrlist{transition:transform .48s cubic-bezier(.22,.7,.2,1);padding:36% 0}
+.lyrline{font-size:17px;font-weight:600;line-height:1.45;letter-spacing:-.01em;
+  color:var(--dim);opacity:.45;padding:9px 2px;
+  transition:color .34s ease,opacity .34s ease,transform .34s cubic-bezier(.22,.7,.2,1);
+  transform:scale(.97);transform-origin:left center}
+.lyrline.cur{color:var(--ink);opacity:1;transform:scale(1)}
+.lyrline.cur span{background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.lyrline.past{opacity:.3}
+.lyroff{display:flex;align-items:center;gap:8px;padding-top:10px;flex:none}
+.lyroff .chip{flex:none}
+
+/* immersive --------------------------------------------------------------- */
+.stage{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 12px) var(--pad) calc(env(safe-area-inset-bottom) + 18px)}
+.stage.open{display:flex}
+.stage .sart{position:absolute;inset:-14%;background-size:cover;background-position:center;
+  filter:blur(34px) saturate(1.35) brightness(.66);transform:scale(1.16);z-index:0;
+  transition:background-image .7s ease}
+.stage .sscrim{position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg,rgba(6,5,12,.62),rgba(6,5,12,.30) 42%,rgba(6,5,12,.86))}
+.stage .inner{position:relative;z-index:2;display:flex;flex-direction:column;
+  height:100%;gap:12px}
+.stage .sclose{align-self:flex-start;width:36px;height:36px;border-radius:50%;
+  display:grid;place-items:center;background:var(--glass);color:var(--ink);
+  box-shadow:inset 0 0 0 1px var(--line)}
+.stage .scover{width:min(66vw,280px);aspect-ratio:1;border-radius:24px;
+  align-self:center;background-size:cover;background-position:center;
+  box-shadow:0 28px 70px -22px #000,inset 0 0 0 1px rgba(255,255,255,.12);
+  transition:transform .5s cubic-bezier(.22,.7,.2,1)}
+.stage .smeta{text-align:center}
+.stage .stitle{font-size:18px;font-weight:680;letter-spacing:-.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage .sartist{font-size:11.5px;color:var(--dim);margin-top:2px}
+.stage .lyrbox{flex:1;min-height:80px}
+.stage .lyrline{font-size:19px}
+
+/* theme sheet ------------------------------------------------------------- */
+.tgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.tcard{display:flex;flex-direction:column;gap:7px;border-radius:16px;padding:8px;
+  background:var(--glass);box-shadow:inset 0 0 0 1px var(--line);text-align:left;
+  transition:transform .24s ease,box-shadow .28s ease}
+.tcard:active{transform:scale(.97)}
+.tcard.sel{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 60%,transparent)}
+.tswatch{height:44px;border-radius:11px;position:relative;overflow:hidden}
+.tswatch .orb{position:absolute;border-radius:50%;filter:blur(9px);opacity:.85}
+.tmeta{min-width:0}
+.tname{font-size:11.5px;font-weight:640;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.tscene{font-size:9px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;margin-top:1px}
+
+/* the record behind the sleeve ---------------------------------------------- */
+.vinyl{position:absolute;top:7%;right:-10%;width:96%;aspect-ratio:1;border-radius:50%;
+  z-index:0;transform:scale(.99);
+  background:
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.055) 0 1px, rgba(0,0,0,0) 1px 4px),
+    radial-gradient(circle at 50% 50%, #0a0912 0 31%, #151322 32% 61%, #0b0a12 62% 100%);
+  box-shadow:0 20px 44px -20px rgba(0,0,0,.95), inset 0 0 0 1px rgba(255,255,255,.05)}
+.vinyl span{position:absolute;inset:38%;border-radius:50%;
+  background:radial-gradient(circle at 38% 34%, var(--accent2), var(--accent) 72%);
+  box-shadow:0 0 20px color-mix(in srgb, var(--accent) 50%, transparent)}
+.vinyl.spin{animation:vspin 11s linear infinite}
+@keyframes vspin{to{transform:rotate(360deg)}}
+
+/* the video wall ------------------------------------------------------------- */
+.vgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+.vcard{border-radius:16px;overflow:hidden;background:var(--glass);
+  box-shadow:inset 0 0 0 1px var(--line);text-align:left;
+  transition:transform .22s cubic-bezier(.22,.7,.2,1)}
+.vcard:active{transform:scale(.97)}
+.vthumb{aspect-ratio:16/9;background:rgba(255,255,255,.05) center/cover no-repeat;
+  position:relative}
+.vthumb .vplay{position:absolute;inset:0;display:grid;place-items:center;
+  background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.42))}
+.vmeta{padding:8px 9px 10px}
+.vtitle{font-size:11.5px;font-weight:600;line-height:1.32;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vsub{font-size:9px;color:var(--dim);margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+.wstage{position:fixed;inset:0;z-index:35;display:none;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 16px);
+  background:rgba(5,4,11,.97);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.wstage.open{display:flex}
+.wframe{position:relative;width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
+  background:#000;box-shadow:0 26px 60px -22px #000, inset 0 0 0 1px rgba(255,255,255,.08)}
+.wframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+/* the converter -------------------------------------------------------------- */
+.cvcard{display:flex;gap:12px;align-items:center;padding:11px;border-radius:18px;
+  background:var(--glass);box-shadow:inset 0 0 0 1px var(--line)}
+.cvcover{width:76px;height:76px;border-radius:15px;flex:none;
+  background:rgba(255,255,255,.06) center/cover no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.cvname{font-size:15px;font-weight:670;letter-spacing:-.015em;line-height:1.25;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cvsub{font-size:9.5px;color:var(--dim);margin-top:5px;letter-spacing:.16em;text-transform:uppercase}
+.cvgo{width:100%;margin-top:12px;padding:13px;border-radius:15px;font-size:10.5px;
+  letter-spacing:.2em;text-transform:uppercase;font-weight:750;color:#0a0714;
+  background:linear-gradient(140deg,var(--accent),var(--accent2));
+  box-shadow:0 16px 34px -14px color-mix(in srgb,var(--accent) 70%,transparent);
+  transition:transform .18s cubic-bezier(.22,.7,.2,1)}
+.cvgo:active{transform:scale(.98)}
+.cvgo[disabled]{opacity:.45;box-shadow:none}
+.pbar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);
+  overflow:hidden;margin-top:14px}
+.pbar i{display:block;height:100%;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width .45s cubic-bezier(.22,.7,.2,1)}
+.cvmiss{margin-top:12px;font-size:10.5px;color:var(--dim);line-height:1.6}
+.cvmiss b{color:var(--ink);font-weight:600}
+
+/* toast ------------------------------------------------------------------- */
+.note{position:fixed;left:50%;z-index:40;
+  bottom:calc(env(safe-area-inset-bottom) + var(--dock) + 84px);
+  transform:translateX(-50%) translateY(10px);background:rgba(22,18,36,.95);
+  border:1px solid var(--line);color:var(--ink);font-size:11.5px;line-height:1.5;
+  padding:10px 15px;border-radius:14px;max-width:84vw;text-align:center;opacity:0;
+  pointer-events:none;transition:opacity .26s ease,transform .26s ease}
+.note.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<canvas id="atmo"></canvas>
+<div id="bg1"></div><div id="bg2"></div><div id="scrim"></div>
+
+<div class="app">
+  <div class="top">
+    <div class="mark">AETHERMIX</div>
+    <div class="net" id="net">connecting</div>
+    <button class="tbtn" id="themeBtn">theme</button>
+    <div class="dot" id="dot"></div>
+  </div>
+
+  <div class="panes">
+    <!-- ---------------------------------------------------------------- now -->
+    <section class="pane on" id="pane-now">
+      <div class="now">
+        <div class="sleeve-wrap">
+          <div class="halo" id="halo"></div>
+          <div class="vinyl" id="vinyl"><span></span></div>
+          <div class="sleeve idle" id="sleeve">nothing playing</div>
+        </div>
+        <div class="nowmeta">
+          <div class="nowtitle" id="ntitle">—</div>
+          <div class="nowartist" id="nartist">pick a song to begin</div>
+          <div class="pill" id="pill" hidden><span id="pilltext">streaming</span></div>
+        </div>
+
+        <div class="vizbox">
+          <div class="vmodes" id="vmodes">
+            <button class="vmode on" data-m="bars">bars</button>
+            <button class="vmode" data-m="wave">wave</button>
+            <button class="vmode" data-m="orb">orb</button>
+          </div>
+          <canvas class="viz" id="viz"></canvas>
+        </div>
+
+        <div class="timeline">
+          <input type="range" id="seek" min="0" max="1000" value="0" step="1" aria-label="Seek">
+          <div class="times"><span id="tnow">0:00</span><span id="tleft">-0:00</span></div>
+        </div>
+
+        <div class="transport">
+          <button class="tb" id="shuffle" aria-label="Shuffle">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3l4 4-4 4V8h-2.2l-2.5 3.1-1.3-1.6L13.6 6H17V3zM3 6h4.4l2.7 3.4-1.3 1.6L6.6 8H3V6zm14 12h-3.4l-2.4-3-1.3 1.6L12.6 20H17v-3l4 4-4 4v-3zM3 16h3.6l2.5-3.1 1.3 1.6L7.4 18H3v-2z"/></svg>
+          </button>
+          <button class="tb" id="prev" aria-label="Previous">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h2v14H7zM19 5v14L9 12z"/></svg>
+          </button>
+          <button class="play" id="toggle" aria-label="Play or pause">
+            <svg id="ticon" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button class="tb" id="next" aria-label="Next">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M15 5h2v14h-2zM5 5l10 7-10 7z"/></svg>
+          </button>
+          <button class="tb" id="repeat" aria-label="Repeat">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+          </button>
+        </div>
+
+        <div class="chiprow">
+          <button class="chip" id="openLyrics">lyrics</button>
+          <button class="chip" id="openQueue">queue</button>
+          <button class="chip" id="openStage">immersive</button>
+          <button class="chip" id="sleepBtn">sleep · off</button>
+          <button class="chip" id="audioChip">audio · reactive</button>
+        </div>
+
+        <div class="vol">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h3l5-4v14l-5-4H4z"/></svg>
+          <input class="thin" type="range" id="vol" min="0" max="100" value="85" step="1" aria-label="Volume">
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------- stream -->
+    <section class="pane" id="pane-stream">
+      <div class="group">
+        <div class="glabel">stream from the web <span class="count" id="streamSrc">youtube</span></div>
+        <div class="searchrow">
+          <input id="wq" type="search" placeholder="search youtube or soundcloud" autocomplete="off">
+        </div>
+        <div class="filterrow" id="wsrc">
+          <button class="fchip on" data-src="youtube">youtube</button>
+          <button class="fchip" data-src="soundcloud">soundcloud</button>
+        </div>
+        <div id="wresults"><div class="empty">Nothing typed yet.<br>Search, then tap a row to play it on this phone.<br>Playback is relayed by your PC, nothing is downloaded.</div></div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ convert -->
+    <section class="pane" id="pane-convert">
+      <div class="group">
+        <div class="glabel">convert a playlist <span class="count">youtube · soundcloud · spotify</span></div>
+        <div class="searchrow">
+          <input id="convertLink" type="url" inputmode="url" autocapitalize="off"
+                 autocomplete="off" spellcheck="false"
+                 placeholder="paste a playlist link">
+        </div>
+        <div class="filterrow">
+          <button class="fchip on" id="convertRead">read the link</button>
+          <button class="fchip" data-lim="0">all songs</button>
+          <button class="fchip" data-lim="25">first 25</button>
+          <button class="fchip" data-lim="50">first 50</button>
+        </div>
+        <div id="convertBox">
+          <div class="empty">Paste a playlist link and this reads its name, art and songs.
+            Converting makes a room on the desktop with the same cover and whatever it
+            can find, and lists every song it could not.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------------- watch -->
+    <section class="pane" id="pane-watch">
+      <div class="group">
+        <div class="glabel">watch <span class="count">youtube</span></div>
+        <div class="searchrow">
+          <input id="vq" type="search" placeholder="search videos" autocomplete="off">
+        </div>
+        <div id="vresults"><div class="empty">Search for a video and it plays here, in the page.
+          The song that was playing pauses first.</div></div>
+      </div>
+
+      <div class="group" style="margin-top:24px">
+        <div class="glabel">open an address</div>
+        <div class="searchrow">
+          <input id="webUrl" type="url" inputmode="url" autocapitalize="off"
+                 autocomplete="off" spellcheck="false" placeholder="https://…">
+          <button class="fchip" id="webGo">open</button>
+        </div>
+        <div style="font-size:10px;color:var(--dim);line-height:1.65">
+          Hands the address to Safari. This page never reads, proxies or stores the site.
+        </div>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------------- rooms -->
+    <section class="pane" id="pane-rooms">
+      <div class="group">
+        <div class="glabel">rooms on your desktop <span class="count" id="roomCount"></span></div>
+        <div class="cards" id="roomcards"></div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ library -->
+    <section class="pane" id="pane-lib">
+      <div class="group">
+        <div id="libHead">
+          <div class="searchrow">
+            <input id="q" type="search" placeholder="search title or artist" autocomplete="off">
+          </div>
+          <div class="filterrow" id="filters">
+            <button class="fchip on" data-src="all">all</button>
+            <button class="fchip" data-src="rooms">rooms</button>
+            <button class="fchip" data-src="local">vault</button>
+            <button class="fchip" data-src="web">streams</button>
+            <button class="fchip" data-src="playable">has audio</button>
+          </div>
+        </div>
+        <div class="glabel">
+          <span id="liblabel">your whole library</span>
+          <button class="chip" id="roomcover" hidden style="margin-left:auto">cover</button>
+          <button class="chip" id="backlib" hidden>all songs</button>
+        </div>
+        <div id="tracklist"><div class="empty">reading the library…</div></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="mini" id="mini">
+  <div class="thumb" id="mthumb"></div>
+  <div class="rtext">
+    <div class="rtitle" id="mtitle">—</div>
+    <div class="rsub" id="martist"></div>
+  </div>
+  <button class="tb" id="mtoggle" aria-label="Play or pause">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+</div>
+
+<nav class="dock" id="dock">
+  <button class="ditem on" data-pane="now">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 2.4a6.6 6.6 0 110 13.2 6.6 6.6 0 010-13.2zM12 8.5A3.5 3.5 0 1012 15a3.5 3.5 0 000-6.5z"/></svg>
+    <span>now</span><i class="ind"></i>
+  </button>
+  <button class="ditem" data-pane="stream">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M3 15.5a6 6 0 016-6 1 1 0 010 2 4 4 0 100 8 1 1 0 010 2 6 6 0 01-6-6zm4.5 0a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 4l7 4-7 4V4zM13 12h2v8h-2z"/></svg>
+    <span>stream</span><i class="ind"></i>
+  </button>
+  <button class="ditem" data-pane="rooms">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+    <span>rooms</span><i class="ind"></i>
+  </button>
+  <button class="ditem" data-pane="lib">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h16v2H4V5zm0 6h16v2H4v-2zm0 6h10v2H4v-2z"/></svg>
+    <span>library</span><i class="ind"></i>
+  </button>
+  <button class="ditem" data-pane="watch">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zm6 3.5v7l6-3.5-6-3.5z"/></svg>
+    <span>watch</span><i class="ind"></i>
+  </button>
+  <button class="ditem" data-pane="convert">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h8v2H7V7zm0 4h8v2H7v-2zm0 4h5v2H7v-2zm9-9h4v4l-4-4zm4 4v9a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h10l4 4z"/></svg>
+    <span>convert</span><i class="ind"></i>
+  </button>
+</nav>
+
+<div class="sheet" id="lyricsSheet">
+  <div class="backdrop" data-close="lyricsSheet"></div>
+  <div class="panel" style="height:74vh">
+    <div class="grab"></div>
+    <h3>lyrics</h3>
+    <p class="hint" id="lyrHint">Word for word with this phone's own clock.</p>
+    <div class="lyrbox" id="lyrBox"><div class="lyrlist" id="lyrList"></div></div>
+    <div class="lyroff">
+      <button class="chip" id="nudgeBack">− 0.5s</button>
+      <span class="hint" style="margin:0" id="lyrOff">offset 0.0s</span>
+      <button class="chip" id="nudgeFwd">+ 0.5s</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="queueSheet">
+  <div class="backdrop" data-close="queueSheet"></div>
+  <div class="panel" style="max-height:70vh">
+    <div class="grab"></div>
+    <h3>up next</h3>
+    <p class="hint">This phone's own queue, in the order it will play.</p>
+    <div class="lyrbox" style="overflow-y:auto;-webkit-mask-image:none;mask-image:none">
+      <div id="queueList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="addSheet">
+  <div class="backdrop" data-close="addSheet"></div>
+  <div class="panel" style="max-height:82vh">
+    <div class="grab"></div>
+    <h3>add to a room</h3>
+    <p class="hint" id="addWhat">pick the room, then choose how it lives there.</p>
+    <div class="filterrow" id="addRooms" style="flex-wrap:wrap;gap:6px"></div>
+    <div class="filterrow" id="addMode" style="margin-top:12px">
+      <button class="fchip on" data-mode="stream">stream it</button>
+      <button class="fchip" data-mode="file">download it</button>
+    </div>
+    <p class="hint" id="addModeHint">Streaming relays the song through this phone's bridge and
+      writes nothing to the laptop's disk. Downloading keeps a copy there, so the song
+      keeps playing on a plane.</p>
+    <button class="go" id="addGo">add to the room</button>
+  </div>
+</div>
+
+<div class="sheet" id="coverSheet">
+  <div class="backdrop" data-close="coverSheet"></div>
+  <div class="panel" style="max-height:82vh">
+    <div class="grab"></div>
+    <h3>room cover</h3>
+    <p class="hint">Pick a face from the art already in this room, or paste an image address.</p>
+    <div class="tgrid" id="coverGrid" style="max-height:44vh;overflow-y:auto"></div>
+    <div class="searchrow" style="margin-top:10px">
+      <input id="coverUrl" type="url" inputmode="url" autocapitalize="off"
+             autocomplete="off" spellcheck="false" placeholder="https://…/cover.jpg">
+      <button class="fchip" id="coverUse">use</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="themeSheet">
+  <div class="backdrop" data-close="themeSheet"></div>
+  <div class="panel" style="max-height:76vh">
+    <div class="grab"></div>
+    <h3>theme</h3>
+    <p class="hint">Read from the desktop with a preview request, so picking one here never
+      changes the desktop's own theme.</p>
+    <div class="lyrbox" style="overflow-y:auto;-webkit-mask-image:none;mask-image:none">
+      <div class="tgrid" id="tgrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="sart" id="sart"></div>
+  <div class="sscrim"></div>
+  <div class="inner">
+    <button class="sclose" id="stageClose" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3 5.7L12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/></svg>
+    </button>
+    <div class="scover" id="scover"></div>
+    <div class="smeta">
+      <div class="stitle" id="stitle">—</div>
+      <div class="sartist" id="sartist"></div>
+    </div>
+    <div class="lyrbox" id="stageLyrBox"><div class="lyrlist" id="stageLyrList"></div></div>
+    <canvas class="viz" id="viz2" style="height:64px"></canvas>
+  </div>
+</div>
+
+<div class="wstage" id="wstage">
+  <div style="display:flex;align-items:center;gap:10px;padding-bottom:12px">
+    <button class="tb" id="wclose" aria-label="Close video">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3 5.7L12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/></svg>
+    </button>
+    <div style="min-width:0;flex:1">
+      <div class="vtitle" id="wtitle" style="font-size:13px">—</div>
+      <div class="vsub" id="wsub"></div>
+    </div>
+  </div>
+  <div class="wframe"><iframe id="wframe" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+    allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="video"></iframe></div>
+  <div class="cvmiss" style="margin-top:14px">Playing from YouTube's own player. Close this to go back to the song.</div>
+</div>
+
+<div class="note" id="note"></div>
+<audio id="au" preload="metadata" playsinline crossorigin="anonymous"></audio>
+<audio id="au2" preload="metadata" playsinline></audio>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const au = $('#au');
+
+/* `#au2` is the only thing that makes sound: a plain media element, which is
+   what iOS keeps playing on a locked screen and what owns the Now Playing
+   card. `#au` is a silent shadow of the same stream, routed through the
+   analyser into a gain of zero, so the spectrum is real without the sound
+   passing through Web Audio. */
+const au2 = $('#au2');
+let out = au2;                                      // the element the transport drives
+let audioMode = localStorage.getItem('aether.mix.audio') || 'viz';   // 'viz' | 'safe'
+let shadowTimer = 0;
+let resumeOnVisible = false;
+
+/* ------------------------------------------------------------------ helpers */
+function fmt(ms){
+  if (!isFinite(ms) || ms < 0) ms = 0;
+  const t = Math.floor(ms / 1000);
+  return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+}
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* The desktop draws covers as file:///C:/... because that is its own disk. The
+   phone cannot open that path, so it asks the bridge's cover route instead. */
+function coverURL(raw){
+  if (!raw) return '';
+  if (/^file:/i.test(raw)){
+    let p = raw.replace(/^file:\/*/i, '');
+    return '/cover?path=' + encodeURIComponent(p);
+  }
+  return raw;
+}
+function paint(el, raw){
+  const u = coverURL(raw);
+  el.style.backgroundImage = u ? 'url("' + u.replace(/"/g, '%22') + '")' : '';
+}
+
+let noteTimer = null;
+function note(msg){
+  const n = $('#note');
+  n.textContent = msg;
+  n.classList.add('show');
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => n.classList.remove('show'), 3200);
+}
+function online(ok){
+  $('#dot').classList.toggle('off', !ok);
+  $('#net').textContent = ok ? 'linked' : 'offline';
+}
+async function j(url){
+  const r = await fetch(url, {cache:'no-store'});
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+/* ------------------------------------------------------------------- state */
+let queue = [];          // [{key,title,artist,cover,duration_ms,src,playable,stream}]
+let qIndex = -1;
+let curKey = null;
+let curTrack = null;
+let roomId = null;       // the room open in the library pane, or null
+let roomName = '';
+let shuffle = false;
+let repeat = 0;          // 0 off, 1 all, 2 one
+let dragging = false;
+let pane = 'now';
+
+/* ------------------------------------------------------------------- panes */
+function showPane(name){
+  pane = name;
+  $$('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + name));
+  $$('.ditem').forEach(d => d.classList.toggle('on', d.dataset.pane === name));
+  $('#mini').classList.toggle('show', name !== 'now' && !!curTrack);
+  if (name === 'rooms' && !$('#roomcards').dataset.loaded) loadRooms();
+  if (name === 'lib' && !$('#tracklist').dataset.loaded) loadLibrary();
+}
+$$('.ditem').forEach(d => d.addEventListener('click', () => showPane(d.dataset.pane)));
+
+/* --------------------------------------------------------------- now paint */
+function setNow(title, artist, cover, sub){
+  $('#ntitle').textContent = title || '—';
+  $('#nartist').textContent = artist || '';
+  $('#mtitle').textContent = title || '—';
+  $('#martist').textContent = artist || '';
+  $('#stitle').textContent = title || '—';
+  $('#sartist').textContent = artist || '';
+  paint($('#sleeve'), cover);
+  paint($('#scover'), cover);
+  paint($('#mthumb'), cover);
+  paint($('#bg1'), cover);
+  paint($('#bg2'), cover);
+  paint($('#sart'), cover);
+  $('#sleeve').classList.toggle('idle', !cover);
+  $('#sleeve').textContent = cover ? '' : 'nothing playing';
+  $('#pilltext').textContent = sub || 'streaming';
+}
+
+/* ------------------------------------------------------------------- play */
+function srcFor(t){
+  if (t.src) return t.src;
+  return '/stream/audio?id=' + t.id;
+}
+
+function playAt(i){
+  if (i < 0 || i >= queue.length) return;
+  const t = queue[i];
+  if (!t.playable){ note('That row has no audio on the desktop yet.'); return; }
+  stopShadow();
+  if (audioMode === 'viz') initViz();
+  out = au2;
+  qIndex = i;
+  curKey = t.key;
+  curTrack = t;
+  setNow(t.title, t.artist, t.cover, t.stream ? 'streaming from ' + (t.source || 'the web') : 'local audio');
+  $('#pill').hidden = false;
+  mediaSet(au2, srcFor(t));
+  au2.muted = false;
+  const p = au2.play();
+  if (p && p.catch) p.catch(e => {
+    // a hidden page may not be allowed to start a new song; remember it and
+    // begin the moment the page is visible again
+    if (document.hidden) resumeOnVisible = true;
+    else note('Cannot play this one: ' + e.message);
+  });
+  markRows();
+  loadLyrics(t);
+  setSession(t);
+  paintIcon();
+  startShadow();
+}
+
+function markRows(){
+  $$('#tracklist .row, #wresults .row').forEach(r =>
+    r.classList.toggle('on', r.dataset.key === curKey));
+}
+
+function paintIcon(){
+  const playing = !out.paused && !out.ended;
+  const d = playing ? 'M7 5h4v14H7zM13 5h4v14h-4z' : 'M8 5v14l11-7z';
+  $('#ticon').innerHTML = '<path d="' + d + '"/>';
+  $('#toggle').classList.toggle('playing', playing);
+  $('#mtoggle').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">' +
+    '<path d="' + d + '"/></svg>';
+  $('#vinyl').classList.toggle('spin', playing);
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+  if (!playing) stopViz();
+}
+
+/* progress belongs to this phone and nothing else */
+function tick(el){
+  if (el && el !== out) return;
+  const t = curTrack || {};
+  const dur = (out.duration && isFinite(out.duration)) ? out.duration * 1000 : (t.duration_ms || 0);
+  const pos = out.currentTime * 1000;
+  if (!dragging && dur > 0){
+    const f = Math.max(0, Math.min(1, pos / dur));
+    $('#seek').value = Math.round(f * 1000);
+    $('#seek').style.setProperty('--fill', (f * 100) + '%');
+  }
+  $('#tnow').textContent = fmt(pos);
+  $('#tleft').textContent = '-' + fmt(Math.max(0, dur - pos));
+  syncLyrics(pos);
+  // the lock screen scrubber reads this; without it iOS shows no seek bar
+  // and never offers the ±10s buttons
+  if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && dur > 0 &&
+      performance.now() - lastPosAt > 900){
+    lastPosAt = performance.now();
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: dur / 1000,
+        playbackRate: 1,
+        position: Math.min(dur / 1000, Math.max(0, pos / 1000))
+      });
+    } catch (e) {}
+  }
+}
+let lastPosAt = 0;
+
+function togglePlay(){
+  if (!out.src){ note('Pick a song first'); return; }
+  if (audioMode === 'viz') initViz();
+  if (out.paused){ out.play().catch(() => {}); startShadow(); }
+  else { out.pause(); stopShadow(); }
+  setTimeout(paintIcon, 30);
+}
+$('#toggle').addEventListener('click', togglePlay);
+$('#mtoggle').addEventListener('click', togglePlay);
+
+function nextIndex(step){
+  if (!queue.length) return -1;
+  if (shuffle && queue.length > 1 && step > 0){
+    let n = qIndex;
+    while (n === qIndex) n = Math.floor(Math.random() * queue.length);
+    return n;
+  }
+  const n = qIndex + (step || 1);
+  if (n >= queue.length) return repeat === 1 ? 0 : -1;
+  if (n < 0) return -1;
+  return n;
+}
+$('#next').addEventListener('click', () => {
+  const n = nextIndex(1);
+  if (n >= 0) playAt(n); else note('That was the last song in this list');
+});
+$('#prev').addEventListener('click', () => {
+  if (out.currentTime > 3){ out.currentTime = 0; return; }
+  const n = nextIndex(-1);
+  if (n >= 0) playAt(n); else note('That was the first song in this list');
+});
+$('#shuffle').addEventListener('click', () => {
+  shuffle = !shuffle;
+  $('#shuffle').classList.toggle('on', shuffle);
+  note(shuffle ? 'Shuffle on' : 'Shuffle off');
+});
+$('#repeat').addEventListener('click', () => {
+  repeat = (repeat + 1) % 3;
+  $('#repeat').classList.toggle('on', repeat > 0);
+  note(['Repeat off', 'Repeat this list', 'Repeat this song'][repeat]);
+});
+
+$('#seek').addEventListener('input', e => {
+  dragging = true;
+  $('#seek').style.setProperty('--fill', (e.target.value / 10) + '%');
+  const t = curTrack || {};
+  const dur = (out.duration && isFinite(out.duration)) ? out.duration : ((t.duration_ms || 0) / 1000);
+  $('#tnow').textContent = fmt((e.target.value / 1000) * dur * 1000);
+  if (dur) $('#tleft').textContent = '-' + fmt((dur - (e.target.value / 1000) * dur) * 1000);
+});
+$('#seek').addEventListener('change', e => {
+  const t = curTrack || {};
+  const dur = (out.duration && isFinite(out.duration)) ? out.duration : ((t.duration_ms || 0) / 1000);
+  if (dur) out.currentTime = (e.target.value / 1000) * dur;
+  dragging = false;
+});
+$('#vol').addEventListener('input', e => { au.volume = e.target.value / 100; au2.volume = au.volume; });
+au.volume = 0.85;
+au2.volume = 0.85;
+
+[au, au2].forEach(el => {
+  el.addEventListener('play', () => {
+    if (el !== out) return;
+    paintIcon();
+    if (el === au && analyser) startViz();
+    if (el === au2 && audioMode === 'viz' && !au.paused) startViz();
+  });
+  el.addEventListener('pause', () => {
+    if (el !== out) return;
+    paintIcon();
+    drawViz();
+  });
+  el.addEventListener('timeupdate', () => tick(el));
+  el.addEventListener('ended', () => {
+    if (el !== out) return;
+    if (repeat === 2){ out.currentTime = 0; out.play().catch(() => {}); return; }
+    const n = nextIndex(1);
+    if (n >= 0) playAt(n); else { paintIcon(); note('End of the list'); }
+  });
+  el.addEventListener('error', () => {
+    if (el === out && el.src) note('That song would not stream. Try another.');
+  });
+});
+
+/* ------------------------------------------------------------------ sleep */
+let sleepAt = 0;
+$('#sleepBtn').addEventListener('click', () => {
+  const opts = [0, 15, 30, 60];
+  const i = opts.indexOf(Math.round(sleepMinutes()));
+  const next = opts[(i + 1) % opts.length];
+  sleepAt = next ? Date.now() + next * 60000 : 0;
+  $('#sleepBtn').textContent = next ? 'sleep · ' + next + 'm' : 'sleep · off';
+  $('#sleepBtn').classList.toggle('hot', !!next);
+  if (next) note('Pausing in ' + next + ' minutes');
+});
+function sleepMinutes(){
+  if (!sleepAt) return 0;
+  const left = Math.max(0, sleepAt - Date.now());
+  if (!left){ sleepAt = 0; out.pause(); stopShadow(); $('#sleepBtn').textContent = 'sleep · off'; $('#sleepBtn').classList.remove('hot'); return 0; }
+  return Math.ceil(left / 60000);
+}
+setInterval(() => { if (sleepAt) sleepMinutes(); }, 5000);
+
+/* ------------------------------------------------------------- visualiser */
+let actx = null, analyser = null, vizData = null, vizRAF = 0;
+let vizMode = localStorage.getItem('aether.mix.viz') || 'bars';
+let smooth = null;
+
+function initViz(){
+  // iOS only lets an audio graph start inside a real gesture
+  if (actx){ if (actx.state === 'suspended') actx.resume().catch(() => {}); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  try {
+    actx = new AC();
+    const src = actx.createMediaElementSource(au);
+    analyser = actx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.86;
+    // a gain of zero is what makes the shadow inaudible. The element's own
+    // `muted`/`volume` would silence the analyser with it (measured: average
+    // level 94 -> 0), but a zero gain sits downstream of the tap, so the
+    // spectrum stays whole while nothing reaches the speakers.
+    const mute = actx.createGain();
+    mute.gain.value = 0;
+    src.connect(analyser);
+    analyser.connect(mute);
+    mute.connect(actx.destination);
+    vizData = new Uint8Array(analyser.frequencyBinCount);
+    smooth = new Float32Array(64);
+    if (actx.state === 'suspended') actx.resume().catch(() => {});
+  } catch (e) {
+    // if the graph is half-built the shadow would be audible; forget it and
+    // let the visualiser stay dark rather than doubling the song
+    actx = null; analyser = null; vizData = null;
+    return;
+  }
+  startViz();
+}
+function startViz(){ if (vizRAF || !analyser) return;
+  const step = () => { drawViz(); vizRAF = requestAnimationFrame(step); };
+  vizRAF = requestAnimationFrame(step); }
+function stopViz(){ if (vizRAF){ cancelAnimationFrame(vizRAF); vizRAF = 0; } }
+
+function css(name, fallback){
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+/* one smoothed spectrum, drawn three ways. The easing is what keeps this from
+   flickering: a raw byte array jumps between frames, an eased one glides. */
+function spectrum(n){
+  if (!analyser || !vizData) return null;
+  analyser.getByteFrequencyData(vizData);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++){
+    // low bands carry the weight; the top of the range is mostly air
+    const bin = Math.floor(Math.pow(i / n, 1.55) * (vizData.length * 0.7));
+    const raw = Math.pow(vizData[bin] / 255, 1.45);
+    smooth[i] += (raw - smooth[i]) * 0.34;
+    out[i] = smooth[i];
+  }
+  return out;
+}
+function sizeCanvas(c){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return null;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)){
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return {ctx, w, h};
+}
+function drawViz(){
+  const spots = [['#viz', 34], ['#viz2', 26]];
+  const a = css('--accent', '#a08cff'), b = css('--accent2', '#5ee7ff');
+  const quiet = out.paused || !out.src || au.paused;
+  spots.forEach(([sel, n], idx) => {
+    const c = $(sel);
+    if (!c) return;
+    const s = sizeCanvas(c);
+    if (!s) return;
+    const {ctx, w, h} = s;
+    const data = spectrum(n) || new Float32Array(n);
+    if (!idx){
+      // the room breathes with the song: the sleeve's glow follows the level
+      let sum = 0;
+      for (let i = 0; i < n; i++) sum += data[i];
+      const energy = sum / n;
+      $('#halo').style.opacity = (0.32 + Math.min(0.55, energy * 1.9)).toFixed(3);
+    }
+    const grad = ctx.createLinearGradient(0, 0, w, 0);
+    grad.addColorStop(0, a); grad.addColorStop(1, b);
+    ctx.globalAlpha = quiet ? 0.26 : 0.95;
+    if (vizMode === 'wave'){
+      ctx.beginPath();
+      for (let i = 0; i < n; i++){
+        const x = (i / (n - 1)) * w;
+        const y = h - 4 - data[i] * (h - 10);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.strokeStyle = grad; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+      ctx.lineCap = 'round'; ctx.stroke();
+      // a soft mirror below the line so it reads as a shape, not a stroke
+      ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+      const fill = ctx.createLinearGradient(0, 0, 0, h);
+      fill.addColorStop(0, css('--accent', '#a08cff') + '55');
+      fill.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = fill; ctx.fill();
+    } else if (vizMode === 'orb'){
+      const cx = w / 2, cy = h / 2;
+      const base = Math.min(w, h) * 0.26;
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++){
+        const k = i % n;
+        const ang = (k / n) * Math.PI * 2 - Math.PI / 2;
+        const r = base + data[k] * Math.min(w, h) * 0.22;
+        const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = grad; ctx.lineWidth = 2; ctx.stroke();
+      const fill = ctx.createRadialGradient(cx, cy, 2, cx, cy, base * 1.9);
+      fill.addColorStop(0, css('--accent2', '#5ee7ff') + '44');
+      fill.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = fill; ctx.fill();
+    } else {
+      const bw = w / n;
+      ctx.fillStyle = grad;
+      for (let i = 0; i < n; i++){
+        const bh = Math.max(1.5, data[i] * (h - 8));
+        const x = i * bw + 1.2;
+        const r = Math.min(2.6, bw / 2.4);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, h - bh, Math.max(1, bw - 2.4), bh, r);
+        else ctx.rect(x, h - bh, Math.max(1, bw - 2.4), bh);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+$$('.vmode').forEach(b => {
+  b.classList.toggle('on', b.dataset.m === vizMode);
+  b.addEventListener('click', () => {
+    vizMode = b.dataset.m;
+    localStorage.setItem('aether.mix.viz', vizMode);
+    $$('.vmode').forEach(x => x.classList.toggle('on', x === b));
+    drawViz();
+  });
+});
+
+/* ------------------------------------------------------------------ lyrics */
+let lyrLines = [], lyrActive = -1;
+let lyrOffset = parseFloat(localStorage.getItem('aether.mix.lyrOff') || '0');
+let lyrFor = null;
+
+function parseLRC(txt){
+  const out = [];
+  String(txt || '').split(/\r?\n/).forEach(line => {
+    const m = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/.exec(line);
+    if (!m) return;
+    const frac = m[3] ? parseInt((m[3] + '00').slice(0, 3), 10) : 0;
+    const t = (+m[1]) * 60000 + (+m[2]) * 1000 + frac;
+    const text = line.replace(/\[[^\]]*\]/g, '').trim();
+    if (text) out.push({t, text});
+  });
+  return out.sort((a, b) => a.t - b.t);
+}
+function plainLines(txt){
+  const rows = String(txt || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  return rows.length ? rows.map((text, i) => ({t: -1, text})) : [];
+}
+
+async function loadLyrics(t){
+  lyrFor = t.key;
+  lyrLines = []; lyrActive = -1;
+  renderLyrics();
+  if (!t) return;
+  // a room row and a search result have no library id; naming the song is
+  // enough, because the desktop's library is keyed by title+artist anyway
+  const q = (typeof t.id === 'number')
+    ? '/lyrics?id=' + t.id
+    : '/lyrics?title=' + encodeURIComponent(t.title || '') +
+      '&artist=' + encodeURIComponent(t.artist || '');
+  try {
+    const d = await j(q);
+    if (lyrFor !== t.key) return;      // the song changed while we asked
+    const body = d.lyrics || '';
+    if (!body){ lyrLines = []; $('#lyrHint').textContent = 'No words found for this song.'; renderLyrics(); return; }
+    const synced = d.synced && /\[\d/.test(body);
+    lyrLines = synced ? parseLRC(body) : plainLines(body);
+    $('#lyrHint').textContent = synced
+      ? 'Word for word with this phone\'s own clock.'
+      : 'These words have no timings, so they just sit here.';
+    renderLyrics();
+  } catch (e) {
+    lyrLines = [];
+    $('#lyrHint').textContent = 'The desktop could not read the words for this one.';
+    renderLyrics();
+  }
+}
+function renderLyrics(){
+  const html = lyrLines.map((l, i) => '<div class="lyrline" data-i="' + i + '"><span>' +
+    esc(l.text) + '</span></div>').join('');
+  $('#lyrList').innerHTML = html || '';
+  $('#stageLyrList').innerHTML = html || '';
+  lyrActive = -1;
+  $('#lyrOff').textContent = 'offset ' + lyrOffset.toFixed(1) + 's';
+  if (lyrLines.length) scrollLyrics(true);
+}
+function syncLyrics(pos){
+  if (!lyrLines.length || lyrLines[0].t < 0) return;
+  const at = pos + lyrOffset * 1000;
+  let idx = -1;
+  for (let i = 0; i < lyrLines.length; i++){
+    if (lyrLines[i].t <= at) idx = i; else break;
+  }
+  if (idx === lyrActive) return;
+  lyrActive = idx;
+  $$('.lyrline').forEach(el => {
+    const i = +el.dataset.i;
+    el.classList.toggle('cur', i === idx);
+    el.classList.toggle('past', i < idx);
+  });
+  scrollLyrics();
+}
+function scrollLyrics(instant){
+  if (lyrActive < 0) return;
+  ['#lyrBox', '#stageLyrBox'].forEach(sel => {
+    const box = $(sel);
+    if (!box || !box.offsetParent) return;
+    const list = box.firstElementChild;
+    const el = list && list.querySelector('.lyrline[data-i="' + lyrActive + '"]');
+    if (!el) return;
+    const target = box.clientHeight * 0.42 - (el.offsetTop + el.offsetHeight / 2);
+    if (instant) list.style.transition = 'none';
+    list.style.transform = 'translateY(' + Math.max(-list.clientHeight + 40, Math.min(0, target)) + 'px)';
+    if (instant) requestAnimationFrame(() => { list.style.transition = ''; });
+  });
+}
+$('#nudgeBack').addEventListener('click', () => { lyrOffset -= 0.5; lyricsNudged(); });
+$('#nudgeFwd').addEventListener('click', () => { lyrOffset += 0.5; lyricsNudged(); });
+function lyricsNudged(){
+  localStorage.setItem('aether.mix.lyrOff', String(lyrOffset));
+  $('#lyrOff').textContent = 'offset ' + lyrOffset.toFixed(1) + 's';
+  lyrActive = -1;
+  syncLyrics(out.currentTime * 1000);
+}
+
+/* ------------------------------------------------------------------ sheets */
+function openSheet(id){ $('#' + id).classList.add('open'); }
+function closeSheet(id){ $('#' + id).classList.remove('open'); }
+$$('[data-close]').forEach(el => el.addEventListener('click', () => closeSheet(el.dataset.close)));
+$('#openLyrics').addEventListener('click', () => {
+  openSheet('lyricsSheet');
+  // the sheet was hidden while the song played, so its scroll position was
+  // never measurable. Put it under the current line once it has a layout.
+  requestAnimationFrame(() => scrollLyrics(true));
+});
+$('#openStage').addEventListener('click', () => {
+  openStage();
+});
+$('#stageClose').addEventListener('click', () => closeStage());
+$('#openQueue').addEventListener('click', () => { drawQueue(); openSheet('queueSheet'); });
+function openStage(){
+  const st = $('#stage');
+  if (!curTrack){ note('Pick a song first'); return; }
+  st.classList.add('open');
+  sizeStageCover();
+  lyrActive = -1;
+  renderLyrics();
+  syncLyrics(out.currentTime * 1000);
+  requestAnimationFrame(() => scrollLyrics(true));
+  if (analyser && out === au) startViz();
+}
+function closeStage(){ $('#stage').classList.remove('open'); }
+function sizeStageCover(){
+  const w = Math.min(window.innerWidth * 0.66, 280);
+  $('#scover').style.height = w + 'px';
+}
+window.addEventListener('resize', () => { sizeStageCover(); drawViz(); });
+
+function drawQueue(){
+  const box = $('#queueList');
+  if (!queue.length){ box.innerHTML = '<div class="empty">Nothing queued.</div>'; return; }
+  const rows = [];
+  queue.forEach((t, i) => {
+    if (i <= qIndex && repeat !== 1) return;
+    rows.push('<div class="row" data-i="' + i + '">' +
+      '<div class="rtext"><div class="rtitle">' + esc(t.title) + '</div>' +
+      '<div class="rsub">' + esc(t.artist || 'unknown') + '</div></div>' +
+      '<div class="rdur">' + fmt(t.duration_ms) + '</div></div>');
+  });
+  box.innerHTML = rows.join('') || '<div class="empty">This is the last song.</div>';
+  box.querySelectorAll('.row').forEach(r => r.addEventListener('click', () => {
+    playAt(+r.dataset.i);
+    closeSheet('queueSheet');
+  }));
+}
+
+/* -------------------------------------------------------------------- rooms */
+async function loadRooms(){
+  const box = $('#roomcards');
+  box.dataset.loaded = '1';
+  try {
+    const d = await j('/playlists');
+    const ps = d.playlists || [];
+    box.innerHTML = '';
+    ps.forEach(p => {
+      const card = document.createElement('button');
+      card.className = 'card';
+      card.dataset.room = p.id;
+      card.innerHTML = '<div class="art"></div><div class="fade"></div>' +
+        '<div class="ctext"><div class="cname">' + esc(p.name) + '</div>' +
+        '<div class="csub">' + (p.total || 0) + ' songs</div></div>';
+      // the shelf shows a stack of real art; the first cover stands for the room
+      const art = card.querySelector('.art');
+      const cov = (p.covers && p.covers.length ? p.covers[0] : p.cover) || '';
+      paint(art, cov);
+      card.addEventListener('click', () => openRoom(p));
+      box.appendChild(card);
+    });
+    const add = document.createElement('button');
+    add.className = 'card new';
+    add.innerHTML = '<div style="text-align:center"><div class="plus">+</div>' +
+      '<div class="lbl">new room</div></div>';
+    add.addEventListener('click', makeRoom);
+    box.appendChild(add);
+    $('#roomCount').textContent = ps.length ? ps.length + ' rooms' : '';
+  } catch (e) {
+    box.innerHTML = '<div class="empty">Cannot reach the desktop.<br>' + esc(e.message) + '</div>';
+  }
+}
+
+async function makeRoom(){
+  const name = prompt('Name this room');
+  if (!name) return;
+  try {
+    const r = await j('/playlist/new?name=' + encodeURIComponent(name));
+    if (r && r.ok){ note('Room created'); $('#roomcards').dataset.loaded = ''; loadRooms(); }
+    else note('Could not make that room');
+  } catch (e) { note('Could not make that room'); }
+}
+
+let libSeq = 0;
+async function openRoom(p){
+  const box = $('#tracklist');
+  const seq = ++libSeq;
+  box.dataset.loaded = '1';
+  box.innerHTML = '<div class="empty">reading…</div>';
+  try {
+    const d = await j('/room?id=' + encodeURIComponent(p.id));
+    if (seq !== libSeq) return;
+    roomId = p.id;
+    roomName = d.playlist_name || p.name || 'room';
+    $('#liblabel').textContent = roomName;
+    $('#liblabel').dataset.base = roomName;
+    $('#backlib').hidden = false;
+    $('#roomcover').hidden = false;
+    showPane('lib');
+    renderTracks((d.tracks || []).map(t => ({
+      key: 'room:' + p.id + ':' + t.row,
+      id: null,
+      title: t.title, artist: t.artist, album: t.album,
+      cover: t.cover,
+      duration_ms: t.duration_ms,
+      src: '/room/audio?id=' + encodeURIComponent(p.id) + '&row=' + t.row,
+      playable: !!t.playable,
+      stream: !!t.stream,
+      source: 'the room'
+    })));
+  } catch (e) {
+    box.innerHTML = '<div class="empty">Cannot read that room.<br>' + esc(e.message) + '</div>';
+  }
+}
+$('#backlib').addEventListener('click', () => loadLibrary(true));
+
+/* ------------------------------------------------------- add to a room (phone)
+   One row, one room, two ways to live there. `stream` writes a row that points
+   at the page and is relayed through the bridge; `file` writes the row now and
+   upgrades it to a local copy the moment the laptop finishes the download. */
+let addTrack = null, addMode = 'stream', addRoom = null;
+
+function openAddSheet(r){
+  addTrack = r;
+  addRoom = roomId || addRoom;
+  // page titles repeat the artist ("Daft Punk - Instant Crush ft. ..."); the
+  // sheet should read like a song, not like a search result
+  const parts = songParts(r);
+  $('#addWhat').textContent = (parts.artist ? parts.artist + ' — ' : '') + parts.title;
+  openSheet('addSheet');
+  loadAddRooms();
+}
+
+async function loadAddRooms(){
+  const box = $('#addRooms');
+  box.innerHTML = '<span class="hint" style="margin:0">reading rooms…</span>';
+  try {
+    const d = await j('/playlists');
+    const ps = d.playlists || [];
+    if (!addRoom) addRoom = d.active || (ps[0] && ps[0].id) || null;
+    box.innerHTML = '';
+    ps.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'fchip' + (p.id === addRoom ? ' on' : '');
+      b.textContent = p.name + ' · ' + (p.total || 0);
+      b.onclick = () => {
+        addRoom = p.id;
+        $$('#addRooms .fchip').forEach(x => x.classList.toggle('on', x === b));
+      };
+      box.appendChild(b);
+    });
+    if (!ps.length) box.innerHTML = '<span class="hint" style="margin:0">make a room first</span>';
+  } catch (e) {
+    box.innerHTML = '<span class="hint" style="margin:0">cannot reach the desktop</span>';
+  }
+}
+
+$$('#addMode .fchip').forEach(b => b.addEventListener('click', () => {
+  addMode = b.dataset.mode;
+  $$('#addMode .fchip').forEach(x => x.classList.toggle('on', x === b));
+  $('#addModeHint').textContent = addMode === 'file'
+    ? 'Downloading asks the laptop to fetch the audio once. The row appears now and plays from the file as soon as it lands.'
+    : 'Streaming relays the song through this phone\'s bridge and writes nothing to the laptop\'s disk.';
+}));
+
+$('#addGo').addEventListener('click', async () => {
+  if (!addTrack || !addRoom){ note('Pick a room first'); return; }
+  const btn = $('#addGo');
+  btn.disabled = true; btn.textContent = 'adding…';
+  try {
+    const d = await j('/playlist/add_web?pl=' + encodeURIComponent(addRoom) +
+      '&url=' + encodeURIComponent(addTrack.url) + '&mode=' + addMode);
+    note(d.ok ? (d.duplicate ? 'Already in that room' : (d.msg || 'Added')) : (d.error || 'Could not add that'));
+    if (d.ok){ closeSheet('addSheet'); $('#roomcards').dataset.loaded = ''; }
+  } catch (e) { note('Could not add that'); }
+  btn.disabled = false; btn.textContent = 'add to the room';
+});
+
+/* ------------------------------------------------------------- room cover */
+$('#roomcover').addEventListener('click', async () => {
+  if (!roomId) return;
+  openSheet('coverSheet');
+  const g = $('#coverGrid');
+  g.innerHTML = '<span class="hint">reading art…</span>';
+  try {
+    const d = await j('/playlist/covers?pl=' + encodeURIComponent(roomId));
+    const cs = (d.covers || []).slice(0, 24);
+    g.innerHTML = '';
+    cs.forEach(c => {
+      const b = document.createElement('button');
+      const url = c.indexOf('file') === 0 ? '/cover?path=' + encodeURIComponent(c) : c;
+      b.style.cssText = 'width:58px;height:58px;border-radius:12px;margin:4px;background-size:cover;background-position:center;border:1px solid var(--glass-hi)';
+      b.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
+      b.addEventListener('click', () => setCover(c));
+      g.appendChild(b);
+    });
+    if (!cs.length) g.innerHTML = '<span class="hint">no art in this room yet</span>';
+  } catch (e) {
+    g.innerHTML = '<span class="hint">cannot read that art</span>';
+  }
+});
+
+$('#coverUse').addEventListener('click', () => {
+  const v = $('#coverUrl').value.trim();
+  if (v) setCover(v);
+});
+
+async function setCover(c){
+  if (!roomId) return;
+  try {
+    const d = await j('/playlist/cover?pl=' + encodeURIComponent(roomId) + '&cover=' + encodeURIComponent(c));
+    note(d.ok ? 'Cover set' : 'Could not set that cover');
+    if (d.ok){
+      closeSheet('coverSheet');
+      $('#roomcards').dataset.loaded = '';
+      loadRooms();
+      const card = document.querySelector('[data-room="' + CSS.escape(roomId) + '"]');
+      if (card) paint(card.querySelector('.art'), c);
+    }
+  } catch (e) { note('Could not set that cover'); }
+}
+
+/* --------------------------------------------------------------------- watch
+   YouTube's own player, embedded. Nothing is scraped and nothing is stored on
+   the PC: the phone talks to YouTube directly, the laptop only answers the
+   search. The song pauses so two things are never playing at once. */
+let watchSeq = 0, watchTimer = 0, watchWasPlaying = false;
+
+function vcard(r){
+  const b = document.createElement('button');
+  b.className = 'vcard';
+  b.innerHTML =
+    '<div class="vthumb"><div class="vplay">' +
+      '<svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(255,255,255,.92)"><path d="M8 5v14l11-7z"/></svg>' +
+    '</div></div>' +
+    '<div class="vmeta"><div class="vtitle">' + esc(r.title) + '</div>' +
+    '<div class="vsub">' + esc(r.artist || 'youtube') +
+      (r.duration_ms ? ' · ' + fmt(r.duration_ms) : '') + '</div></div>';
+  const th = b.querySelector('.vthumb');
+  if (r.thumb) th.style.backgroundImage = 'url("' + r.thumb.replace(/"/g, '%22') + '")';
+  b.addEventListener('click', () => playVideo(r));
+  return b;
+}
+
+async function watchSearch(retried){
+  const q = $('#vq').value.trim();
+  const box = $('#vresults');
+  if (q.length < 2){ box.innerHTML = '<div class="empty">Type at least two letters.</div>'; return; }
+  const seq = ++watchSeq;
+  if (!retried) box.innerHTML = '<div class="empty">looking…</div>';
+  try {
+    const d = await j('/stream/search?q=' + encodeURIComponent(q) + '&src=youtube');
+    if (seq !== watchSeq) return;
+    // the bridge gates searches; a thumb that lands on the key twice should
+    // see results, not an error
+    if (d.error && !retried && /couple of seconds/i.test(d.error)){
+      setTimeout(() => watchSearch(true), 1900);
+      return;
+    }
+    if (d.error){ box.innerHTML = '<div class="empty">' + esc(d.error) + '</div>'; return; }
+    const rows = d.results || [];
+    if (!rows.length){ box.innerHTML = '<div class="empty">Nothing found.</div>'; return; }
+    const grid = document.createElement('div');
+    grid.className = 'vgrid';
+    rows.forEach(r => grid.appendChild(vcard(r)));
+    box.innerHTML = '';
+    box.appendChild(grid);
+  } catch (e) {
+    box.innerHTML = '<div class="empty">Cannot reach the desktop.<br>' + esc(e.message) + '</div>';
+  }
+}
+
+function playVideo(r){
+  watchWasPlaying = !out.paused;
+  out.pause();
+  stopShadow();
+  $('#wtitle').textContent = r.title || '';
+  $('#wsub').textContent = (r.artist || 'youtube') + (r.duration_ms ? ' · ' + fmt(r.duration_ms) : '');
+  $('#wframe').src = 'https://www.youtube.com/embed/' + encodeURIComponent(r.id) +
+    '?autoplay=1&playsinline=1&rel=0&modestbranding=1';
+  $('#wstage').classList.add('open');
+}
+
+function closeVideo(){
+  $('#wframe').src = 'about:blank';
+  $('#wstage').classList.remove('open');
+  if (watchWasPlaying && curTrack){ out.play().catch(() => {}); startShadow(); }
+}
+$('#wclose').addEventListener('click', closeVideo);
+
+$('#webGo').addEventListener('click', () => {
+  let u = ($('#webUrl').value || '').trim();
+  if (!u) return;
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  window.open(u, '_blank', 'noopener');
+});
+$('#vq').addEventListener('input', () => {
+  clearTimeout(watchTimer);
+  watchTimer = setTimeout(watchSearch, 900);
+});
+$('#vq').addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); clearTimeout(watchTimer); watchSearch(); $('#vq').blur(); }
+});
+
+/* ------------------------------------------------------------------ converter
+   The desktop importer already turns a link into a room with its own cover and
+   a list of the songs it could not find; this is the same job asked for from
+   the phone. Preview first, then one button, then the job reports itself. */
+let convLimit = 0, convUrl = '', convTimer = 0;
+
+function convCard(pv){
+  const box = $('#convertBox');
+  box.innerHTML =
+    '<div class="cvcard"><div class="cvcover" id="cvCover"></div>' +
+      '<div style="min-width:0"><div class="cvname">' + esc(pv.name || 'untitled list') + '</div>' +
+      '<div class="cvsub">' + (pv.count || 0) + ' songs · ' + esc(pv.source || 'link') + '</div></div></div>' +
+    '<button class="cvgo" id="cvGo">convert to a room</button>' +
+    '<div id="cvProgress"></div>';
+  paint($('#cvCover'), pv.cover || '');
+  $('#cvGo').addEventListener('click', convertStart);
+}
+
+async function convertPreview(){
+  const url = ($('#convertLink').value || '').trim();
+  const box = $('#convertBox');
+  if (url.length < 8 || !/^https?:\/\//i.test(url)){
+    box.innerHTML = '<div class="empty">That does not look like a playlist link.</div>';
+    return;
+  }
+  convUrl = url;
+  box.innerHTML = '<div class="empty">reading the list…</div>';
+  try {
+    const d = await j('/convert/preview?url=' + encodeURIComponent(url) + '&limit=' + convLimit);
+    if (!d.ok){ box.innerHTML = '<div class="empty">' + esc(d.error || 'Could not read that link.') + '</div>'; return; }
+    convCard(d);
+  } catch (e) {
+    box.innerHTML = '<div class="empty">Cannot reach the desktop.<br>' + esc(e.message) + '</div>';
+  }
+}
+
+async function convertStart(){
+  if (!convUrl) return;
+  const go = $('#cvGo');
+  if (go){ go.disabled = true; go.textContent = 'converting…'; }
+  try {
+    const d = await j('/convert/start?url=' + encodeURIComponent(convUrl) +
+      '&limit=' + convLimit + '&name=');
+    if (!d.ok){
+      note(d.error || 'Could not convert that list');
+      if (go){ go.disabled = false; go.textContent = 'convert to a room'; }
+      return;
+    }
+    note(d.streamed ? 'Room ready: ' + d.name : 'Converting ' + d.total + ' songs into “' + d.name + '”');
+    convWatch();
+    $('#roomcards').dataset.loaded = '';
+  } catch (e) {
+    note('Could not convert that list');
+    if (go){ go.disabled = false; go.textContent = 'convert to a room'; }
+  }
+}
+
+function convWatch(){
+  clearInterval(convTimer);
+  const draw = s => {
+    const total = s.total || 0, done = s.done || 0;
+    const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+    const miss = (s.failed || []);
+    const box = $('#cvProgress');
+    if (!box) return;
+    box.innerHTML =
+      '<div class="pbar"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="cvsub" style="margin-top:9px">' +
+        (s.running ? 'working' : 'finished') + ' · ' + done + ' of ' + total + ' songs</div>' +
+      (miss.length ? '<div class="cvmiss"><b>' + miss.length + ' could not be found:</b><br>' +
+        miss.slice(0, 10).map(f => esc(f.title) + ' — ' + esc(f.error || 'no match')).join('<br>') +
+        (miss.length > 10 ? '<br>…' : '') + '</div>' : '');
+  };
+  convTimer = setInterval(async () => {
+    try {
+      const s = await j('/convert/status');
+      draw(s);
+      if (!s.running){
+        clearInterval(convTimer);
+        $('#roomcards').dataset.loaded = '';
+        note('Room ready: ' + (s.name || 'playlist') +
+          (s.failed && s.failed.length ? ' (' + s.failed.length + ' not found)' : ''));
+      }
+    } catch (e) { /* the next tick asks again */ }
+  }, 1600);
+}
+
+$('#convertRead').addEventListener('click', convertPreview);
+$('#convertLink').addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); $('#convertLink').blur(); convertPreview(); }
+});
+$$('#pane-convert [data-lim]').forEach(b => b.addEventListener('click', () => {
+  convLimit = parseInt(b.dataset.lim, 10) || 0;
+  $$('#pane-convert [data-lim]').forEach(x => x.classList.toggle('on', x === b));
+  if (convUrl) convertPreview();
+}));
+
+/* ------------------------------------------------------------------ library */
+function renderTracks(list){
+  // `queue` stays the whole list so a row's index is always its real index;
+  // the filters only decide which rows are drawn
+  queue = list;
+  drawTrackList();
+}
+
+function matches(t){
+  if (srcFilter === 'rooms' && t.origin !== 'playlist') return false;
+  if (srcFilter === 'local' && t.origin !== 'local') return false;
+  if (srcFilter === 'web' && !t.stream) return false;
+  if (srcFilter === 'playable' && !t.playable) return false;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (t.title || '').toLowerCase().includes(q) ||
+         (t.artist || '').toLowerCase().includes(q) ||
+         (t.album || '').toLowerCase().includes(q);
+}
+
+function drawTrackList(){
+  const box = $('#tracklist');
+  if (!queue.length){ box.innerHTML = '<div class="empty">This room is empty.</div>'; return; }
+  const shown = [];
+  queue.forEach((t, i) => { if (matches(t)) shown.push([t, i]); });
+  const totalMs = shown.reduce((a, p) => a + (p[0].duration_ms || 0), 0);
+  const label = $('#liblabel');
+  const base = label.dataset.base || label.textContent;
+  label.textContent = base + (shown.length ? ' · ' + shown.length +
+    (shown.length !== queue.length ? '/' + queue.length : '') +
+    (totalMs > 0 ? ' · ' + Math.round(totalMs / 60000) + ' min' : '') : '');
+  if (!shown.length){ box.innerHTML = '<div class="empty">Nothing matches that.</div>'; return; }
+  const frag = document.createDocumentFragment();
+  shown.forEach(([t, i]) => {
+    const row = document.createElement('div');
+    row.className = 'row' + (t.key === curKey ? ' on' : '');
+    row.dataset.key = t.key;
+    row.innerHTML =
+      '<div class="thumb"></div>' +
+      '<div class="rtext"><div class="rtitle">' + esc(t.title) + '</div>' +
+      '<div class="rsub">' + esc(t.artist || 'unknown') + '</div></div>' +
+      (t.key === curKey && !out.paused
+        ? '<div class="eq"><i></i><i></i><i></i></div>'
+        : '<div class="rdur">' + fmt(t.duration_ms) + '</div>') +
+      (t.playable ? (t.stream ? '<div class="badge">web</div>' : '') : '<div class="badge">no audio</div>');
+    paint(row.querySelector('.thumb'), t.cover);
+    row.addEventListener('click', () => playAt(i));
+    frag.appendChild(row);
+  });
+  box.innerHTML = '';
+  box.appendChild(frag);
+}
+
+async function loadLibrary(force){
+  const box = $('#tracklist');
+  box.dataset.loaded = '1';
+  const seq = ++libSeq;
+  roomId = null;
+  roomName = '';
+  $('#roomcover').hidden = true;
+  box.innerHTML = '<div class="empty">reading…</div>';
+  $('#backlib').hidden = true;
+  $('#liblabel').dataset.base = 'your whole library';
+  try {
+    const d = await j('/library');
+    if (seq !== libSeq) return;
+    showPane('lib');
+    renderTracks((d.tracks || []).map(t => ({
+      key: 'lib:' + t.id,
+      id: t.id,
+      title: t.title, artist: t.artist, album: t.album,
+      origin: t.origin,
+      cover: t.cover,
+      duration_ms: t.duration_ms,
+      src: (!t.path && t.web) ? ('/stream/audio?id=' + t.id)
+                              : ('/audio?id=' + t.id),
+      playable: !!t.playable,
+      stream: !t.path && !!t.web,
+      source: t.web ? 'the web' : 'this PC'
+    })));
+  } catch (e) {
+    if (seq === libSeq)
+      box.innerHTML = '<div class="empty">Cannot reach the desktop.<br>' + esc(e.message) + '</div>';
+  }
+}
+
+/* ------------------------------------------------------------------- filters */
+let query = '';
+let srcFilter = 'all';
+$('#q').addEventListener('input', e => { query = e.target.value || ''; drawTrackList(); });
+$$('#filters .fchip').forEach(b => b.addEventListener('click', () => {
+  srcFilter = b.dataset.src;
+  $$('#filters .fchip').forEach(x => x.classList.toggle('on', x === b));
+  drawTrackList();
+}));
+
+/* ------------------------------------------------------- stream from the web */
+let wsrc = 'youtube';
+let wTimer = 0, wSeq = 0;
+const wq = $('#wq');
+
+function drawResults(rows){
+  const box = $('#wresults');
+  if (!rows.length){ box.innerHTML = '<div class="empty">No results.</div>'; return; }
+  const frag = document.createDocumentFragment();
+  rows.forEach(r => {
+    const key = 'web:' + r.source + ':' + r.id;
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.dataset.key = key;
+    row.innerHTML =
+      '<div class="thumb"></div>' +
+      '<div class="rtext"><div class="rtitle">' + esc(r.title) + '</div>' +
+      '<div class="rsub">' + esc(r.artist || 'unknown') + (r.source ? ' · ' + r.source : '') + '</div></div>' +
+      '<div class="rdur">' + fmt(r.duration_ms) + '</div>' +
+      '<div class="acts">' +
+        '<button class="act" data-a="play" aria-label="Play">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>' +
+        '<button class="act" data-a="save" aria-label="Add to library">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></button>' +
+      '</div>';
+    const thumbEl = row.querySelector('.thumb');
+    if (r.thumb){ thumbEl.style.backgroundImage = 'url("' + r.thumb + '")'; }
+    row.querySelector('[data-a="play"]').addEventListener('click', ev => {
+      ev.stopPropagation();
+      playSearch(r, key);
+    });
+    // `+` opens the room picker: a song can join a list as a stream or as a
+    // downloaded file, and which one is the listener's call, not a setting
+    // buried on the desktop.
+    row.querySelector('[data-a="save"]').addEventListener('click', ev => {
+      ev.stopPropagation();
+      openAddSheet(r);
+    });
+    frag.appendChild(row);
+  });
+  box.innerHTML = '';
+  box.appendChild(frag);
+  markRows();
+}
+
+/* "Frank Ocean - Novacane (Lyrics)" is a page title, not a song name. Words
+   are looked up by name, so the name has to be the song's. */
+function cleanSong(s){
+  return String(s || '')
+    .replace(/\((?:official\s*)?(?:music\s*)?(?:video|audio|lyrics?|lyric\s*video|visuali[sz]er)\)/gi, '')
+    .replace(/\[(?:official\s*)?(?:music\s*)?(?:video|audio|lyrics?|lyric\s*video|visuali[sz]er)\]/gi, '')
+    .replace(/\bHQ\b|\bHD\b/gi, '')
+    .replace(/\s{2,}/g, ' ').trim();
+}
+function songParts(r){
+  let t = cleanSong(r.title), a = cleanSong(r.artist);
+  const m = t.split(/\s+[-\u2013\u2014]\s+/);
+  if (m.length >= 2){ a = m[0].trim(); t = m.slice(1).join(' - ').trim(); }
+  return {title: t, artist: a};
+}
+
+function playSearch(r, key){
+  initViz();
+  qIndex = -1;
+  curKey = key;
+  curTrack = {
+    key, title: r.title, artist: r.artist, cover: r.thumb,
+    duration_ms: r.duration_ms, stream: true, playable: true,
+    source: r.source,
+    src: '/stream/raw?u=' + encodeURIComponent(r.url) + '&t=' + encodeURIComponent(r.title || '')
+  };
+  setNow(r.title, r.artist, r.thumb, 'streaming from ' + r.source);
+  $('#pill').hidden = false;
+  stopShadow();
+  if (audioMode === 'viz') initViz();
+  out = au2;
+  mediaSet(au2, curTrack.src);
+  au2.muted = false;
+  au2.play().catch(e => note('Cannot play that one: ' + e.message));
+  setSession({ title: r.title, artist: r.artist, album: '', cover: r.thumb });
+  startShadow();
+  markRows();
+  const parts = songParts(r);
+  loadLyrics({ key, title: parts.title, artist: parts.artist });
+  paintIcon();
+}
+
+async function webSearch(){
+  const q = wq.value.trim();
+  const box = $('#wresults');
+  if (q.length < 2){ box.innerHTML = '<div class="empty">Type at least two letters.</div>'; return; }
+  const seq = ++wSeq;
+  box.innerHTML = '<div class="empty">searching ' + esc(wsrc) + '…</div>';
+  try {
+    const d = await j('/stream/search?q=' + encodeURIComponent(q) + '&src=' + wsrc);
+    if (seq !== wSeq) return;
+    if (d.error){ box.innerHTML = '<div class="empty">' + esc(d.error) + '</div>'; return; }
+    drawResults(d.results || []);
+  } catch (e) {
+    if (seq === wSeq) box.innerHTML = '<div class="empty">Cannot search right now.<br>' + esc(e.message) + '</div>';
+  }
+}
+wq.addEventListener('input', () => {
+  clearTimeout(wTimer);
+  wTimer = setTimeout(webSearch, 520);
+});
+wq.addEventListener('keydown', e => { if (e.key === 'Enter'){ clearTimeout(wTimer); webSearch(); wq.blur(); } });
+$$('#wsrc .fchip').forEach(b => b.addEventListener('click', () => {
+  wsrc = b.dataset.src;
+  $('#streamSrc').textContent = wsrc;
+  $$('#wsrc .fchip').forEach(x => x.classList.toggle('on', x === b));
+  if (wq.value.trim().length >= 2) webSearch();
+}));
+
+/* -------------------------------------------------------------------- themes */
+let themeName = localStorage.getItem('aether.mix.theme') || '';
+let themeList = [];
+let theme = { accent: '#a08cff', accent2: '#5ee7ff', bg: '#07060f' };
+
+function themeVars(t){
+  const rgb = hex => {
+    const m = /^#?([0-9a-f]{6})$/i.exec((hex || '').trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const bg = rgb(t.bg) || [7, 6, 15];
+  const acc = rgb(t.accent) || [160, 140, 255];
+  const acc2 = rgb(t.accent2 || t.bar) || [94, 231, 255];
+  const root = document.documentElement.style;
+  root.setProperty('--accent', t.accent || '#a08cff');
+  root.setProperty('--accent2', t.accent2 || t.bar || '#5ee7ff');
+  root.setProperty('--ink', t.text || '#f5f3ff');
+  root.setProperty('--dim', t.dim || '#a9a4c7');
+  root.setProperty('--panel', t.panel || '#0a0a12');
+  root.setProperty('--glass', t.light ? 'rgba(0,0,0,.055)' : 'rgba(255,255,255,.055)');
+  root.setProperty('--glass-hi', t.light ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.105)');
+  root.setProperty('--line', t.light ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.085)');
+  root.setProperty('--bg', t.bg || '#07060f');
+  theme = { accent: t.accent || '#a08cff', accent2: t.accent2 || t.bar || '#5ee7ff', bg: t.bg || '#07060f' };
+  document.body.style.background = t.bg || '#07060f';
+  $('#halo').style.background = 'radial-gradient(circle at 50% 55%, ' +
+    'rgba(' + acc[0] + ',' + acc[1] + ',' + acc[2] + ',.55), transparent 68%)';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta && t.bg) meta.setAttribute('content', t.bg);
+  atmoColors(acc, acc2, bg);
+  drawViz();
+}
+
+async function applyTheme(name, save){
+  try {
+    const t = name
+      ? await j('/theme?name=' + encodeURIComponent(name) + '&preview=1')
+      : await j('/theme/current');
+    if (!t || !t.bg){ note('That theme could not be read'); return; }
+    themeVars(t);
+    themeName = name || '';
+    if (save) localStorage.setItem('aether.mix.theme', themeName);
+    $$('#tgrid .tcard').forEach(c => c.classList.toggle('sel', c.dataset.name === themeName));
+  } catch (e) { note('Theme read failed: ' + e.message); }
+}
+
+async function loadThemes(){
+  try {
+    const d = await j('/themes');
+    themeList = d.themes || [];
+  } catch (e) { return; }
+  const grid = $('#tgrid');
+  grid.innerHTML = '';
+  const mk = (name, label, scene, t) => {
+    const b = document.createElement('button');
+    b.className = 'tcard' + (themeName === name ? ' sel' : '');
+    b.dataset.name = name;
+    const a = (t && t.accent) || '#a08cff';
+    const a2 = (t && (t.accent2 || t.bar)) || '#5ee7ff';
+    const bg = (t && t.bg) || '#07060f';
+    b.innerHTML =
+      '<div class="tswatch" style="background:linear-gradient(150deg,' + bg + ',' + bg + ')">' +
+        '<div class="orb" style="width:34px;height:34px;left:-6px;top:-4px;background:' + a + '"></div>' +
+        '<div class="orb" style="width:26px;height:26px;right:-4px;bottom:-6px;background:' + a2 + '"></div>' +
+        '<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.35))"></div>' +
+      '</div>' +
+      '<div class="tmeta"><div class="tname">' + esc(label) + '</div>' +
+      '<div class="tscene">' + esc(scene || '') + '</div></div>';
+    b.addEventListener('click', () => { applyTheme(name, true); closeSheet('themeSheet'); });
+    grid.appendChild(b);
+  };
+  mk('', 'App theme', 'follows the desktop', null);
+  for (const name of themeList){
+    try {
+      const t = await j('/theme?name=' + encodeURIComponent(name) + '&preview=1');
+      mk(name, t.name || name, t.scene || '', t);
+    } catch (e) { /* one unreadable theme must not empty the grid */ }
+  }
+}
+$('#themeBtn').addEventListener('click', () => { openSheet('themeSheet'); if (!themeList.length) loadThemes(); });
+
+/* ----------------------------------------------------------------- the room
+   A few slow orbs in the theme's own colours, drawn at half resolution and
+   eased by time rather than by frames: cheap, and it never shimmers. */
+let atmoC = null, atmoRAF = 0, atmoT0 = 0;
+let atmoCols = { a:[160,140,255], b:[94,231,255], bg:[7,6,15] };
+function atmoColors(a, b, bg){ atmoCols = { a, b, bg }; }
+function initAtmo(){
+  atmoC = $('#atmo').getContext('2d');
+  if (!atmoC) return;
+  atmoT0 = performance.now();
+  const loop = () => {
+    drawAtmo();
+    atmoRAF = requestAnimationFrame(loop);
+  };
+  atmoRAF = requestAnimationFrame(loop);
+}
+function drawAtmo(){
+  const c = $('#atmo');
+  if (!c || document.hidden) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const w = window.innerWidth, h = window.innerHeight;
+  if (c.width !== Math.round(w * dpr * 0.5) || c.height !== Math.round(h * dpr * 0.5)){
+    c.width = Math.round(w * dpr * 0.5);
+    c.height = Math.round(h * dpr * 0.5);
+  }
+  const t = (performance.now() - atmoT0) / 1000;
+  atmoC.setTransform(1, 0, 0, 1, 0, 0);
+  atmoC.clearRect(0, 0, c.width, c.height);
+  atmoC.scale(dpr * 0.5, dpr * 0.5);
+  const orbs = [
+    { r: 0.52, sx: 0.16, sy: 0.10, ax: 0.05, ay: 0.04, col: atmoCols.a, a: 0.20 },
+    { r: 0.44, sx: 0.82, sy: 0.28, ax: 0.045, ay: 0.055, col: atmoCols.b, a: 0.15 },
+    { r: 0.60, sx: 0.45, sy: 0.92, ax: 0.035, ay: 0.03, col: atmoCols.a, a: 0.13 }
+  ];
+  orbs.forEach((o, i) => {
+    const x = (o.sx + Math.sin(t * 0.11 + i * 2.1) * o.ax) * w;
+    const y = (o.sy + Math.cos(t * 0.09 + i * 1.7) * o.ay) * h;
+    const rad = o.r * Math.min(w, h);
+    const g = atmoC.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, 'rgba(' + o.col[0] + ',' + o.col[1] + ',' + o.col[2] + ',' + o.a + ')');
+    g.addColorStop(0.55, 'rgba(' + o.col[0] + ',' + o.col[1] + ',' + o.col[2] + ',' + (o.a * 0.28) + ')');
+    g.addColorStop(1, 'rgba(' + o.col[0] + ',' + o.col[1] + ',' + o.col[2] + ',0)');
+    atmoC.fillStyle = g;
+    atmoC.beginPath();
+    atmoC.arc(x, y, rad, 0, Math.PI * 2);
+    atmoC.fill();
+  });
+}
+
+/* -------------------------------------------------------------------- booleans */
+async function poll(){
+  try { await j('/state'); online(true); } catch (e) { online(false); }
+}
+
+/* -------------------------------------------- native sound, real spectrum
+   Two elements, two jobs, and no swapping between them:
+
+     #au2  makes every sound this page makes. A plain media element is what
+           iOS keeps alive with the screen locked and what owns the Now
+           Playing card, so the lock screen can skip and scrub.
+     #au   is a silent shadow of the same stream - routed through the
+           analyser into a gain of zero. It never reaches the speakers; it
+           only feeds the spectrum, and only while a visualiser is on screen.
+
+   The previous build handed playback from one to the other the moment the
+   screen locked, which is exactly where the stutter came from. Nothing is
+   handed over now: the sound never changes element, and only the spectrum
+   stops when the page hides. */
+function mediaSet(el, src){
+  if (el.getAttribute('src') !== src) el.setAttribute('src', src);
+}
+
+function setAudioChip(){
+  const b = $('#audioChip');
+  if (!b) return;
+  b.textContent = 'visualiser · ' + (audioMode === 'viz' ? 'on' : 'off');
+  b.classList.toggle('hot', audioMode === 'safe');
+}
+setAudioChip();
+
+let shadowWanted = false;
+
+function startShadow(){
+  shadowWanted = true;
+  if (audioMode !== 'viz' || document.hidden || !analyser || !actx ||
+      actx.state === 'closed') return;
+  clearTimeout(shadowTimer);
+  // play() is asynchronous, so a paused element at this instant usually means
+  // "still starting", not "stopped". Wait for it instead of giving up, or the
+  // spectrum stays flat after a video or a track change.
+  let tries = 0;
+  const attempt = () => {
+    if (!shadowWanted || audioMode !== 'viz' || document.hidden) return;
+    if (!analyser || !actx || actx.state === 'closed' || !out.src) return;
+    if (out.paused){
+      if (++tries <= 6) shadowTimer = setTimeout(attempt, 400);
+      return;
+    }
+    mediaSet(au, out.src);
+    try { au.currentTime = out.currentTime; } catch (e) {}
+    au.volume = 1;
+    au.play().catch(() => {});
+    if (actx.state === 'suspended') actx.resume().catch(() => {});
+    if (!vizRAF) startViz();
+  };
+  // half a beat behind: skipping quickly should not spin up a second decoder
+  shadowTimer = setTimeout(attempt, 450);
+}
+
+function stopShadow(){
+  shadowWanted = false;
+  clearTimeout(shadowTimer);
+  if (!au.paused) au.pause();
+  stopViz();
+  drawViz();
+}
+
+/* two decoders cannot stay in step forever; a nudge every couple of seconds
+   keeps the spectrum on the frame the ear is hearing */
+function keepShadowClose(){
+  if (au.paused || out.paused || !analyser) return;
+  if (Math.abs(au.currentTime - out.currentTime) > 0.4){
+    try { au.currentTime = out.currentTime; } catch (e) {}
+  }
+}
+setInterval(keepShadowClose, 2500);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){
+    // the screen is off: keep the sound, drop the spectrum
+    stopShadow();
+  } else {
+    if (!out.paused) startShadow();
+    if (resumeOnVisible){ resumeOnVisible = false; out.play().catch(() => {}); }
+  }
+});
+
+document.addEventListener('pointerdown', () => {
+  if (audioMode === 'viz' && !out.paused && (au.paused || !vizRAF)) startShadow();
+});
+
+$('#audioChip').addEventListener('click', () => {
+  audioMode = (audioMode === 'viz') ? 'safe' : 'viz';
+  localStorage.setItem('aether.mix.audio', audioMode);
+  setAudioChip();
+  if (audioMode === 'viz'){
+    initViz();
+    if (!out.paused) startShadow();
+    note('Visualiser on');
+  } else {
+    stopShadow();
+    note('Visualiser off — the sound is untouched');
+  }
+});
+
+function seekTo(sec){
+  const p = Math.max(0, Math.min(out.duration || 1e9, sec));
+  out.currentTime = p;
+  if (!au.paused){ try { au.currentTime = p; } catch (e) {} }
+  tick();
+}
+function seekBy(delta){ seekTo(out.currentTime + delta); }
+
+/* The lock screen and the Control Centre read this card, and a native element
+   plus a real media session is what lets iOS treat this page as a player. */
+function setSession(t){
+  if (!('mediaSession' in navigator) || !t) return;
+  try {
+    if (window.MediaMetadata){
+      const art = t.cover ? new URL(coverURL(t.cover), location.href).href : '';
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: t.title || '',
+        artist: t.artist || '',
+        album: t.album || '',
+        artwork: art ? [
+          {src: art, sizes: '512x512', type: 'image/jpeg'},
+          {src: art, sizes: '256x256', type: 'image/jpeg'}
+        ] : []
+      });
+    }
+    const set = (k, fn) => { try { navigator.mediaSession.setActionHandler(k, fn); } catch (e) {} };
+    set('play', () => { out.play().catch(() => {}); startShadow(); paintIcon(); });
+    set('pause', () => { out.pause(); stopShadow(); paintIcon(); });
+    set('previoustrack', () => $('#prev').click());
+    set('nexttrack', () => $('#next').click());
+    set('seekbackward', d => seekBy(-((d && d.seekOffset) || 10)));
+    set('seekforward', d => seekBy((d && d.seekOffset) || 10));
+    set('seekto', d => { if (d && d.seekTime != null) seekTo(d.seekTime); });
+    set('stop', () => { out.pause(); stopShadow(); out.currentTime = 0; paintIcon(); });
+  } catch (e) { /* an unsupported action is not an error worth showing */ }
+}
+
+/* -------------------------------------------------------------------- start */
+showPane('now');
+initAtmo();
+setNow('', '', '');
+applyTheme(themeName, false);
+poll();
+setInterval(poll, 4000);
+</script>
+</body>
+</html>

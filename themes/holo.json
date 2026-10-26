@@ -1,0 +1,63 @@
+{
+  "name": "Holo",
+  "bg": "#101014",
+  "panel": "#1a1a22",
+  "panel_alpha": 0.52,
+  "text": "#f0ecff",
+  "dim": "#8a86a8",
+  "accent": "#ff7ce5",
+  "bar": "#69e4d5",
+  "light": false,
+  "anim": "sheen",
+  "transition": {
+    "type": "tilt",
+    "dur": 420
+  },
+  "bg3d": {
+    "archetype": "orbit",
+    "speed": 1.0,
+    "dir": 1,
+    "intensity": 1.0,
+    "bodies": 6,
+    "oTilt": 55,
+    "oRx": 240,
+    "oRy": 60,
+    "oSize": 0.34,
+    "oMetal": 1.0,
+    "oRough": 0.18,
+    "cSize": 0.9,
+    "glow": 1.6,
+    "bloom": 0.9,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/holo_rainbow.png",
+    "bdY": 60,
+    "bdZ": -280,
+    "bdTilt": 0,
+    "bdW": 11,
+    "bdH": 6.6,
+    "bdGlow": 0.7,
+    "bdOp": 0.42,
+    "bdSway": 6
+  },
+  "tag": "HOLOGRAPHIC",
+  "scene": "light in glass",
+  "line": "light trapped in glass",
+  "accent2": "#7cf9ff",
+  "glow": "#ffd0f7",
+  "mood": "Light caught inside something it can't escape.",
+  "signature": "glass",
+  "depth": {
+    "shadow": 0.55,
+    "rim": 0.5,
+    "grain": 0.1,
+    "vignette": 0.34,
+    "glass": 0.1,
+    "blur": 0.9
+  },
+  "palette": [
+    "#101014",
+    "#1a1a22",
+    "#ff7ce5",
+    "#7cf9ff",
+    "#69e4d5"
+  ]
+}

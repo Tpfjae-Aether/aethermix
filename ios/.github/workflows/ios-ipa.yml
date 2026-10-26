@@ -1,0 +1,71 @@
+name: iOS IPA
+
+# Standalone build repo variant: this file assumes the CONTENTS of ios/ are the
+# repository root (AetherMix/, scripts/, tools/, project.yml next to .github/).
+# That is exactly what ios/dist/AetherMix-ios-source.zip contains, so the web
+# uploader route works: new repository -> upload that bundle -> run this
+# workflow -> download the "AetherMix-unsigned-ipa" artifact.
+#
+# No Apple account, certificate or provisioning profile is involved; the
+# archive is unsigned because Sideloadly signs it on your PC.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - "AetherMix/**"
+      - "scripts/**"
+      - "tools/**"
+      - ".github/workflows/ios-ipa.yml"
+
+jobs:
+  build:
+    # pinned to the macOS 15 image (Xcode 16) because the app targets iOS 16;
+    # if this label is ever retired, macos-26 is the drop-in replacement
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcode-select -p
+
+      # the verifier is the gate in front of Sideloadly; prove it still rejects
+      # broken archives before trusting its verdict on the real one
+      - name: Self-test the IPA verifier
+        run: python3 scripts/test_verify_ipa.py
+
+      # the fastest signal that a rename broke a screen, and it runs before the
+      # expensive Xcode build
+      - name: Static check the Swift sources
+        run: |
+          # the runner Python is externally managed (PEP 668): a system
+          # pip install exits 1 here, so the check gets its own venv
+          python3 -m venv "$RUNNER_TEMP/swiftcheck"
+          "$RUNNER_TEMP/swiftcheck/bin/python" -m pip install --quiet \
+            tree-sitter tree-sitter-swift
+          "$RUNNER_TEMP/swiftcheck/bin/python" tools/swift_check.py
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build and package
+        run: |
+          chmod +x scripts/build_ipa.sh
+          ./scripts/build_ipa.sh
+
+      # the same check a Windows PC can run before sideloading: Payload layout,
+      # an arm64 Mach-O, and the plist keys iOS validates
+      - name: Verify the IPA
+        run: python3 scripts/verify_ipa.py dist/AetherMix-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: AetherMix-unsigned-ipa
+          path: dist/AetherMix-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30

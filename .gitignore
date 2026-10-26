@@ -1,0 +1,54 @@
+# Build output
+/target/
+*.pdb
+*.o
+
+# The extractors are downloaded, not vendored: put yt-dlp.exe and ffmpeg.exe
+# in bin/ (see README) and they stay out of the repository.
+/bin/*.exe
+/bin/*.zip
+/bin/*.dll
+
+# Your library, cache and state. None of this belongs in a public clone:
+# it is someone's music, their artwork and their signed-in sessions.
+/library/
+/cache/
+/extensions/
+/accounts.json
+/oauth_token*.json
+/credentials.json
+/config.json
+/appearance.json
+/now_playing.json
+/playstats.json
+/lyric_offsets.json
+/lyrics_styles.json
+/missing_tracks.txt
+
+# Runtime logs and probes
+*.log
+*.err
+boot.txt
+out.txt
+stub.txt
+qmltrace.txt
+ff_stream_err.txt
+missing_tracks.txt
+/package.json
+
+# Local scratch work: screenshots, probes, staging trees
+/.scratch/
+/.scratchui1.png
+/*.png
+!docs/media/*.png
+!assets/**/*.png
+
+# Editor and OS noise
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# MSYS leaves a real file called nul behind when a Windows command redirects
+# to `nul` from a POSIX shell; Windows cannot delete it through its own APIs.
+/nul

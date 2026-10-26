@@ -1,0 +1,62 @@
+{
+  "name": "Gameboy",
+  "bg": "#9bbc0f",
+  "panel": "#8bac0f",
+  "panel_alpha": 0.68,
+  "text": "#0f380f",
+  "dim": "#306230",
+  "accent": "#9bbc0f",
+  "bar": "#306230",
+  "light": true,
+  "anim": "dither",
+  "transition": {
+    "type": "snap",
+    "dur": 180
+  },
+  "bg3d": {
+    "archetype": "rain",
+    "speed": 0.5,
+    "dir": -1,
+    "intensity": 0.7,
+    "rate": 90,
+    "max": 400,
+    "vy": 26,
+    "psize": 0.42,
+    "pend": 0.5,
+    "life": 9000,
+    "glow": 0.7,
+    "bloom": 0.35,
+    "colorVar": 0.2,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/gameboy_dither.png",
+    "bdY": 40,
+    "bdZ": -300,
+    "bdTilt": 0,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdGlow": 0.5,
+    "bdOp": 0.5,
+    "bdSway": 2
+  },
+  "tag": "DMG-01",
+  "scene": "four shade nostalgia",
+  "line": "dmg-green pixel nostalgia",
+  "accent2": "#306230",
+  "glow": "#c8e86a",
+  "mood": "Four shades were enough for a whole childhood.",
+  "signature": "rain",
+  "depth": {
+    "shadow": 0.3,
+    "rim": 0.55,
+    "grain": 0.4,
+    "vignette": 0.3,
+    "glass": 0.16,
+    "blur": 0.7
+  },
+  "palette": [
+    "#9bbc0f",
+    "#8bac0f",
+    "#9bbc0f",
+    "#306230",
+    "#306230"
+  ]
+}

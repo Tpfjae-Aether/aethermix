@@ -1,0 +1,61 @@
+{
+  "name": "Chrome",
+  "bg": "#101014",
+  "panel": "#1a1a20",
+  "panel_alpha": 0.52,
+  "text": "#e8e8f0",
+  "dim": "#8a8a96",
+  "accent": "#7ff0ff",
+  "bar": "#ffd9a0",
+  "light": false,
+  "anim": "sheen",
+  "transition": {
+    "type": "dolly",
+    "dur": 360
+  },
+  "bg3d": {
+    "archetype": "orbit",
+    "speed": 0.9,
+    "dir": 1,
+    "intensity": 1.0,
+    "bodies": 5,
+    "oTilt": 44,
+    "oRx": 210,
+    "oRy": 70,
+    "oSize": 0.5,
+    "oMetal": 0.95,
+    "oRough": 0.1,
+    "cSize": 1.3,
+    "glow": 0.7,
+    "bloom": 0.5,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/chrome_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.62,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "CHROME",
+  "scene": "liquid metal",
+  "line": "molten steel horizon, y2k",
+  "accent2": "#ff9de2",
+  "glow": "#d9fbff",
+  "mood": "A future imagined by a 1999 showroom.",
+  "signature": "orbit",
+  "depth": {
+    "shadow": 0.7,
+    "rim": 0.45,
+    "grain": 0.06,
+    "vignette": 0.4,
+    "glass": 0.09,
+    "blur": 0.85
+  },
+  "palette": [
+    "#101014",
+    "#1a1a20",
+    "#7ff0ff",
+    "#ff9de2",
+    "#ffd9a0"
+  ]
+}

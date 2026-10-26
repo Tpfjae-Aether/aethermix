@@ -1,0 +1,59 @@
+name: iOS IPA
+
+# Builds the Sideloadly-ready unsigned IPA on a macOS runner.
+# Push the repository (or this folder) to GitHub, run this workflow, download
+# the "AetherMix-unsigned-ipa" artifact, then drag it into Sideloadly.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-ipa.yml"
+
+jobs:
+  build:
+    runs-on: macos-15   # macos-26 if this image is ever retired
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcode-select -p
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # the verifier is the gate in front of Sideloadly; prove it still rejects
+      # broken archives before trusting its verdict on the real one
+      - name: Self-test the IPA verifier
+        run: python3 ios/scripts/test_verify_ipa.py
+
+      # real parser + symbol cross-check, the fastest signal that a rename in
+      # the sources broke a screen
+      - name: Static check the Swift sources
+        run: |
+          python3 -m pip install --quiet tree-sitter tree-sitter-swift
+          python3 ios/tools/swift_check.py
+
+      - name: Build and package
+        working-directory: ios
+        run: |
+          chmod +x scripts/build_ipa.sh
+          ./scripts/build_ipa.sh
+
+      # the same check a Windows PC can run before sideloading: Payload layout,
+      # an arm64 Mach-O, and the plist keys iOS validates
+      - name: Verify the IPA
+        run: python3 ios/scripts/verify_ipa.py ios/dist/AetherMix-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: AetherMix-unsigned-ipa
+          path: ios/dist/AetherMix-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30

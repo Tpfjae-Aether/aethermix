@@ -1,0 +1,59 @@
+{
+  "name": "Bauhaus",
+  "bg": "#f2ead8",
+  "panel": "#ffffff",
+  "panel_alpha": 0.68,
+  "text": "#111111",
+  "dim": "#6b6258",
+  "accent": "#e30613",
+  "bar": "#0066b3",
+  "light": true,
+  "anim": "shapes",
+  "transition": {
+    "type": "snap",
+    "dur": 220
+  },
+  "bg3d": {
+    "archetype": "prims",
+    "speed": 0.75,
+    "dir": 1,
+    "intensity": 0.8,
+    "discs": 4,
+    "dSize": 1.2,
+    "dSquash": 0.14,
+    "dSpread": 230,
+    "dDepth": 120,
+    "dRough": 0.45,
+    "glow": 0.5,
+    "bloom": 0.35,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/bauhaus_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.5,
+    "bdGlow": 0.38,
+    "bdSway": 1.6
+  },
+  "tag": "BAUHAUS",
+  "scene": "primary geometry",
+  "line": "circles, slabs, and honest red",
+  "accent2": "#f2c200",
+  "glow": "#ff5a52",
+  "mood": "Every line knows exactly why it exists.",
+  "signature": "shapes",
+  "depth": {
+    "shadow": 0.3,
+    "rim": 0.55,
+    "grain": 0.08,
+    "vignette": 0.16,
+    "glass": 0.16,
+    "blur": 0.7
+  },
+  "palette": [
+    "#f2ead8",
+    "#ffffff",
+    "#e30613",
+    "#f2c200",
+    "#0066b3"
+  ]
+}

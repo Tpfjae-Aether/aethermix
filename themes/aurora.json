@@ -1,0 +1,62 @@
+{
+  "name": "Aurora",
+  "bg": "#04070f",
+  "panel": "#0a1220",
+  "panel_alpha": 0.52,
+  "text": "#ffffff",
+  "dim": "#9fb3c8",
+  "accent": "#00ffa3",
+  "bar": "#0fd3c4",
+  "light": false,
+  "anim": "ribbons",
+  "transition": {
+    "type": "parallax",
+    "dur": 460
+  },
+  "bg3d": {
+    "archetype": "veil",
+    "speed": 0.8,
+    "dir": 1,
+    "intensity": 0.95,
+    "planes": 6,
+    "tall": 1,
+    "w": 2.6,
+    "h": 7.4,
+    "op": 0.3,
+    "sway": 16,
+    "yaw": 34,
+    "zGap": -85,
+    "glow": 1.15,
+    "bloom": 0.65,
+    "panelTex": "C:/Aether/custom_spotify/assets/themes/aurora_bands.png",
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/aurora_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.4,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "NORDIC DUSK",
+  "scene": "polar sky ribbons",
+  "line": "charged curtains over black snow",
+  "accent2": "#7aa2ff",
+  "glow": "#a6ffe4",
+  "mood": "The sky is writing in green ink.",
+  "signature": "ribbon",
+  "depth": {
+    "shadow": 0.6,
+    "rim": 0.3,
+    "grain": 0.16,
+    "vignette": 0.3,
+    "glass": 0.1,
+    "blur": 0.95
+  },
+  "palette": [
+    "#04070f",
+    "#0a1220",
+    "#00ffa3",
+    "#7aa2ff",
+    "#0fd3c4"
+  ]
+}

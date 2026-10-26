@@ -1,0 +1,60 @@
+{
+  "name": "Low Poly",
+  "bg": "#aee8ff",
+  "panel": "#ffffff",
+  "panel_alpha": 0.68,
+  "text": "#23364a",
+  "dim": "#5b7d92",
+  "accent": "#ff7a3d",
+  "bar": "#ff8a5c",
+  "light": true,
+  "anim": "lowpoly",
+  "transition": {
+    "type": "snap",
+    "dur": 260
+  },
+  "bg3d": {
+    "archetype": "prims",
+    "speed": 0.8,
+    "dir": 1,
+    "intensity": 0.7,
+    "discs": 5,
+    "dSize": 0.9,
+    "dSquash": 0.2,
+    "dSpread": 200,
+    "dDepth": 150,
+    "dMetal": 0.2,
+    "dRough": 0.6,
+    "glow": 0.55,
+    "bloom": 0.35,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/lowpoly_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.5,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "LOW POLY",
+  "scene": "crystal mountains",
+  "line": "crystal mountains, sharp sun",
+  "accent2": "#2ec4b6",
+  "glow": "#ffd166",
+  "mood": "A landscape reduced to its brave decisions.",
+  "signature": "lowpoly",
+  "depth": {
+    "shadow": 0.35,
+    "rim": 0.45,
+    "grain": 0.1,
+    "vignette": 0.2,
+    "glass": 0.14,
+    "blur": 0.7
+  },
+  "palette": [
+    "#aee8ff",
+    "#ffffff",
+    "#ff7a3d",
+    "#2ec4b6",
+    "#ff8a5c"
+  ]
+}

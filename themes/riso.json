@@ -1,0 +1,60 @@
+{
+  "name": "Riso",
+  "bg": "#f4f1ea",
+  "panel": "#ffffff",
+  "panel_alpha": 0.68,
+  "text": "#1a1a1a",
+  "dim": "#6e6a60",
+  "accent": "#ff4d6d",
+  "bar": "#00a99d",
+  "light": true,
+  "anim": "risodrift",
+  "transition": {
+    "type": "glitch",
+    "dur": 300
+  },
+  "bg3d": {
+    "archetype": "prims",
+    "speed": 0.9,
+    "dir": 1,
+    "intensity": 0.8,
+    "discs": 3,
+    "dSize": 1.4,
+    "dSquash": 0.1,
+    "dSpread": 260,
+    "dDepth": 60,
+    "dTilt": 30,
+    "dRough": 0.9,
+    "glow": 0.4,
+    "bloom": 0.3,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/riso_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.5,
+    "bdGlow": 0.38,
+    "bdSway": 1.6
+  },
+  "tag": "RISOGRAPH",
+  "scene": "two ink layers",
+  "line": "two inks, layered by hand",
+  "accent2": "#ffd23f",
+  "glow": "#ff8aa0",
+  "mood": "Two inks, one imperfect register.",
+  "signature": "shapes",
+  "depth": {
+    "shadow": 0.35,
+    "rim": 0.5,
+    "grain": 0.28,
+    "vignette": 0.22,
+    "glass": 0.12,
+    "blur": 0.7
+  },
+  "palette": [
+    "#f4f1ea",
+    "#ffffff",
+    "#ff4d6d",
+    "#ffd23f",
+    "#00a99d"
+  ]
+}

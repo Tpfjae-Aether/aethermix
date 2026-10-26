@@ -1,0 +1,62 @@
+{
+  "name": "Silk",
+  "bg": "#12081d",
+  "panel": "#1a0e2a",
+  "panel_alpha": 0.52,
+  "text": "#f5ecff",
+  "dim": "#b0a2cc",
+  "accent": "#d8b4ff",
+  "bar": "#ffd76a",
+  "light": false,
+  "anim": "silk",
+  "transition": {
+    "type": "veil",
+    "dur": 520
+  },
+  "bg3d": {
+    "archetype": "veil",
+    "speed": 1.1,
+    "dir": 1,
+    "intensity": 1.0,
+    "planes": 8,
+    "tall": 1,
+    "w": 2.2,
+    "h": 7.2,
+    "op": 0.5,
+    "sway": 20,
+    "yaw": 24,
+    "zGap": -70,
+    "glow": 1.2,
+    "bloom": 0.7,
+    "panelTex": "C:/Aether/custom_spotify/assets/themes/silk_sheen.png",
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/silk_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.62,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "SILK",
+  "scene": "midnight folds",
+  "line": "midnight ribbons folding over",
+  "accent2": "#ff9ad5",
+  "glow": "#eed8ff",
+  "mood": "The night folding itself into a gift.",
+  "signature": "ribbon",
+  "depth": {
+    "shadow": 0.55,
+    "rim": 0.3,
+    "grain": 0.12,
+    "vignette": 0.35,
+    "glass": 0.1,
+    "blur": 0.95
+  },
+  "palette": [
+    "#12081d",
+    "#1a0e2a",
+    "#d8b4ff",
+    "#ff9ad5",
+    "#ffd76a"
+  ]
+}

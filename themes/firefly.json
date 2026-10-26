@@ -1,0 +1,63 @@
+{
+  "name": "Firefly",
+  "bg": "#0a1220",
+  "panel": "#121c30",
+  "panel_alpha": 0.52,
+  "text": "#fff2d8",
+  "dim": "#b8a889",
+  "accent": "#ffc861",
+  "bar": "#ffb300",
+  "light": false,
+  "anim": "fireflies",
+  "transition": {
+    "type": "veil",
+    "dur": 460
+  },
+  "bg3d": {
+    "archetype": "motes",
+    "speed": 0.8,
+    "dir": 1,
+    "intensity": 1.0,
+    "rate": 60,
+    "max": 600,
+    "vy": 8,
+    "sx": 220,
+    "sy": 10,
+    "psize": 0.3,
+    "psizeVar": 0.4,
+    "pend": 1.1,
+    "life": 11000,
+    "glow": 1.4,
+    "bloom": 0.8,
+    "colorVar": 0.25,
+    "backdrop": "C:/Aether/custom_spotify/assets/themes/firefly_world.jpg",
+    "bdZ": -300,
+    "bdW": 12.5,
+    "bdH": 7.2,
+    "bdOp": 0.62,
+    "bdGlow": 0.55,
+    "bdSway": 3.2
+  },
+  "tag": "NIGHT MEADOW",
+  "scene": "warm embers adrift",
+  "line": "a thousand warm embers adrift",
+  "accent2": "#7bffcf",
+  "glow": "#ffe0a3",
+  "mood": "A summer night holding its breath.",
+  "signature": "embers",
+  "depth": {
+    "shadow": 0.55,
+    "rim": 0.3,
+    "grain": 0.28,
+    "vignette": 0.48,
+    "glass": 0.14,
+    "blur": 0.95
+  },
+  "palette": [
+    "#0a1220",
+    "#121c30",
+    "#ffc861",
+    "#7bffcf",
+    "#ffb300"
+  ]
+}

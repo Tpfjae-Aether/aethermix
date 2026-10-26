@@ -1,0 +1,54 @@
+{
+  "name": "Warp",
+  "bg": "#04060c",
+  "panel": "#0b1220",
+  "panel_alpha": 0.52,
+  "text": "#dfe9ff",
+  "dim": "#6c7d9c",
+  "accent": "#7bb8ff",
+  "bar": "#ffffff",
+  "light": false,
+  "anim": "starfield",
+  "transition": {
+    "type": "warp",
+    "dur": 580
+  },
+  "bg3d": {
+    "archetype": "streaks",
+    "speed": 2.0,
+    "dir": -1,
+    "intensity": 1.0,
+    "rate": 420,
+    "max": 1300,
+    "vy": 90,
+    "vz": 30,
+    "sy": 40,
+    "psize": 0.16,
+    "pend": 0.2,
+    "life": 2600,
+    "glow": 1.3,
+    "bloom": 0.65
+  },
+  "tag": "LIGHTSPEED",
+  "scene": "starlight stretched",
+  "line": "starlight stretched thin",
+  "accent2": "#ff8ad4",
+  "glow": "#c9e0ff",
+  "mood": "Distance, stretched until it sings.",
+  "signature": "rings",
+  "depth": {
+    "shadow": 0.65,
+    "rim": 0.3,
+    "grain": 0.2,
+    "vignette": 0.5,
+    "glass": 0.08,
+    "blur": 0.9
+  },
+  "palette": [
+    "#04060c",
+    "#0b1220",
+    "#7bb8ff",
+    "#ff8ad4",
+    "#ffffff"
+  ]
+}
