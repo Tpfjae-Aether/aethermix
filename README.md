@@ -176,6 +176,10 @@ from the caller. The list is `LOCAL_ONLY` in [src/server.rs](src/server.rs).
   icon, and the native client in `ios/` is the route to real widgets.
 - Streaming depends on `yt-dlp` staying ahead of the sites it reads. When a site
   changes, update that binary; the app reports the extractor's own error.
+- No prebuilt zip: the data folders are resolved at build time (`AETHER_ROOT`), so an
+  exe built on one machine would read and write that machine's folders. Build
+  from source - `windeployqt` turns the result into a portable folder you can
+  move anywhere.
 - Your music, artwork and sessions live in `library/`, `cache/` and
   `accounts.json`, and are git-ignored on purpose.
 
